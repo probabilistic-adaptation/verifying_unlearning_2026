@@ -551,10 +551,10 @@ def cifar10_dataloaders(
     else:
         train_transform = transforms.Compose(
             [
-                transforms.RandomCrop(32, padding=2),
+                transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(),
                 transforms.ColorJitter(brightness=0.05, contrast=0.1, saturation=0.1),
-                transforms.RandomRotation(degrees = 30),
+                transforms.RandomRotation(degrees = 10),
                 transforms.ToTensor(),
                 transforms.Normalize(mean = [0.4914, 0.4822, 0.4465],std = [0.2023, 0.1994, 0.2010]),
                 
