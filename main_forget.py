@@ -15,6 +15,9 @@ from trainer import validate
 import pickle
 
 def calculate_outputs(model, loader, device):
+    """
+    For a given model and dataloader, gather a bunch of outputs
+    """
     model.eval()
     all_outputs = []
     with torch.no_grad():

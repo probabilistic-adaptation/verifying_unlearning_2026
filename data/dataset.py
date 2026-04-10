@@ -543,9 +543,7 @@ def cifar10_dataloaders(
         train_transform = transforms.Compose(
             [
                 transforms.ToTensor(),
-                # normalize
                 transforms.Normalize(mean = [0.4914, 0.4822, 0.4465],std = [0.2023, 0.1994, 0.2010]),
-                
             ]
         )
     else:
@@ -556,30 +554,27 @@ def cifar10_dataloaders(
                 transforms.ColorJitter(brightness=0.05, contrast=0.1, saturation=0.1),
                 transforms.RandomRotation(degrees = 10),
                 transforms.ToTensor(),
-                transforms.Normalize(mean = [0.4914, 0.4822, 0.4465],std = [0.2023, 0.1994, 0.2010]),
-                
+                transforms.Normalize(mean = [0.4914, 0.4822, 0.4465],std = [0.2023, 0.1994, 0.2010]), 
             ]
         )
 
     test_transform = transforms.Compose(
         [
             transforms.ToTensor(),
-            transforms.Normalize(mean = [0.4914, 0.4822, 0.4465],std = [0.2023, 0.1994, 0.2010]),
-            
+            transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2023, 0.1994, 0.2010]), 
         ]
     )
 
-    print(
-        "Dataset information: CIFAR-10\t 45000 images for training \t 5000 images for validation\t"
-    )
+    print("Dataset information: CIFAR-10\t 45000 images for training \t 5000 images for validation\t")
     print("10000 images for testing\t no normalize applied in data_transform")
     if no_aug:
         print("No training data augmentation")
     else:
         print("Training data augmentation = randomcrop(32,4) + randomhorizontalflip")
 
+    
+    
     train_set = CIFAR10(data_dir, train=True, transform=train_transform, download=True)
-
     test_set = CIFAR10(data_dir, train=False, transform=test_transform, download=True)
 
     train_set.targets = np.array(train_set.targets)
@@ -660,6 +655,14 @@ def cifar10_dataloaders(
 def replace_indexes(
     dataset: torch.utils.data.Dataset, indexes, seed=0, only_mark: bool = False
 ):
+    
+    """
+    For the given dataset, replace the labels for data at "indexes" with something else:
+        if `only_mark`: replace the labels with negative assignments (e.g. 0 -> -1, 1 -> -2, etc)
+        if not `only_mark`: replace the labels with the literal label of randomly sampled other data points
+    """
+
+
     if not only_mark:
         rng = np.random.RandomState(seed)
         new_indexes = rng.choice(
@@ -690,6 +693,18 @@ def replace_class(
     seed: int = 0,
     only_mark: bool = False,
 ):
+
+    """
+    Using `replace_indexes` above to replace the labels for an entire class, 
+    or a subset of observations from a class.
+
+    `num_indexes_to_replace` needs to be <= the number of labels in the given `classes_to_replace`,
+    or, if shuffling the entire dataset, <= number of items in dataset
+
+
+    """
+    # Gather the indeces for the classes you want to replace, either...
+    # ... shuffling all classes, 
     if class_to_replace == -1:
         try:
             indexes = np.flatnonzero(np.ones_like(dataset.targets))
@@ -698,6 +713,8 @@ def replace_class(
                 indexes = np.flatnonzero(np.ones_like(dataset.labels))
             except:
                 indexes = np.flatnonzero(np.ones_like(dataset._labels))
+    
+    # ... or shuffling a specific class.
     else:
         try:
             indexes = np.flatnonzero(np.isin(np.array(dataset.targets), class_to_replace))
@@ -707,6 +724,7 @@ def replace_class(
             except:
                 indexes = np.flatnonzero(np.isin(np.array(dataset._labels), class_to_replace))
     
+    # If you only want to shuffle a subset, then shuffle a random subset
     if num_indexes_to_replace is not None:
         assert num_indexes_to_replace <= len(
             indexes
@@ -714,6 +732,9 @@ def replace_class(
         rng = np.random.RandomState(seed)
         indexes = rng.choice(indexes, size=num_indexes_to_replace, replace=False)
         print(f"Replacing indexes {indexes}")
+
+
+    # Literally replaces the indexes you've gathered
     replace_indexes(dataset, indexes, seed, only_mark)
 
 

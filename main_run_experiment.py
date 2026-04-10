@@ -24,19 +24,22 @@ for seed in seeds:
         os.makedirs(seed_dir)
 
     # ... train a new classifier on a given dataset
-    train_command = [
-        "python", "../Classification/main_train.py",
-        "--save_dir", seed_dir,
-        "--arch", parameters["arch"],
-        "--dataset", parameters["dataset"],
-        "--lr", str(parameters["lr"]),
-        "--epochs", str(parameters["epochs_train"]),
-        "--seed", str(seed),
-        "--train_seed", str(seed)
-    ]
+    # train_command = [
+    #     "python", "../Classification/main_train.py",
+    #     "--save_dir", seed_dir,
+    #     "--arch", parameters["arch"],
+    #     "--dataset", parameters["dataset"],
+    #     "--lr", str(parameters["lr"]),
+    #     "--epochs", str(parameters["epochs_train"]),
+    #     "--seed", str(seed),
+    #     "--train_seed", str(seed)
+    # ]
 
-    print(f"Running training with seed {seed}: {' '.join(train_command)}")
-    subprocess.run(train_command, check=True)
+    # print(f"Running training with seed {seed}: {' '.join(train_command)}")
+    # subprocess.run(train_command, check=True)
+
+    # ... load a model checkpoint from which to begin unlearning
+    
 
     # ... and update model path for the current seed.
     model_name = parameters["origin_model_path"]  # Now just the filename

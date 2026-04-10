@@ -18,23 +18,21 @@ def l1_regularization(model):
 
 
 @iterative_unlearn
-def GA(data_loaders, model, criterion, optimizer, epoch, args, mask=None, **kwargs):
-    train_loader = data_loaders["forget"]
+def GA(forget_loader, model, criterion, optimizer, epoch, args, mask=None, **kwargs):
+    # train_loader = data_loaders["forget"]
     losses = utils.AverageMeter()
     top1 = utils.AverageMeter()
 
     model.train()
-
+    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     start = time.time()
     if args.imagenet_arch:
-        device = (
-            torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
-        )
-        for i, data in enumerate(train_loader):
+        
+        for i, data in enumerate(forget_loader):
             image, target = get_x_y_from_data_dict(data, device)
             if epoch < args.warmup:
                 utils.warmup_lr(
-                    epoch, i + 1, optimizer, one_epoch_step=len(train_loader), args=args
+                    epoch, i + 1, optimizer, one_epoch_step=len(forget_loader), args=args
                 )
 
             output_clean = model(image)
@@ -64,19 +62,19 @@ def GA(data_loaders, model, criterion, optimizer, epoch, args, mask=None, **kwar
                     "Loss {loss.val:.4f} ({loss.avg:.4f})\t"
                     "Accuracy {top1.val:.3f} ({top1.avg:.3f})\t"
                     "Time {3:.2f}".format(
-                        epoch, i, len(train_loader), end - start, loss=losses, top1=top1
+                        epoch, i, len(forget_loader), end - start, loss=losses, top1=top1
                     )
                 )
                 start = time.time()
     else:
-        for i, (image, target) in enumerate(train_loader):
+        for i, (image, target) in enumerate(forget_loader):
             if epoch < args.warmup:
                 utils.warmup_lr(
-                    epoch, i + 1, optimizer, one_epoch_step=len(train_loader), args=args
+                    epoch, i + 1, optimizer, one_epoch_step=len(forget_loader), args=args
                 )
 
-            image = image.cuda()
-            target = target.cuda()
+            image = image.to(device)
+            target = target.to(device)
 
             output_clean = model(image)
             loss = -criterion(output_clean, target)
@@ -106,7 +104,7 @@ def GA(data_loaders, model, criterion, optimizer, epoch, args, mask=None, **kwar
                     "Loss {loss.val:.4f} ({loss.avg:.4f})\t"
                     "Accuracy {top1.val:.3f} ({top1.avg:.3f})\t"
                     "Time {3:.2f}".format(
-                        epoch, i, len(train_loader), end - start, loss=losses, top1=top1
+                        epoch, i, len(forget_loader), end - start, loss=losses, top1=top1
                     )
                 )
                 start = time.time()

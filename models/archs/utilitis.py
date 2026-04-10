@@ -8,7 +8,7 @@ import copy
 import numpy as np
 import torch
 from dataset import *
-from models import *
+from models.archs import *
 
 # from advertorch.utils import NormalizeByChannelMeanStd
 

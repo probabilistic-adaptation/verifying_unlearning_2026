@@ -1,15 +1,15 @@
 parameters = {
     # Random Seeds
-    "random_seeds": [19, 12, 25],
+    "random_seeds": [42],
     # Model and Dataset Configuration
-    "arch": "resnet18",
+    "arch": "ConvNet",
     "dataset": "cifar10",
-    "origin_model_path": "0model_SA_best.pth.tar",  # Changed to just filename without path
+    # "origin_model_path": "0model_SA_best.pth.tar",  # Changed to just filename without path
 
     # Training Parameters
-    "lr": 0.1,
+    # "lr": 0.1,
     # "epochs_train": 20,
-    "epochs_train": 4, # use to test config changes b/c shorter run time
+    # "epochs_train": 4, # use to test config changes b/c shorter run time
 
     # Unlearning Configuration
     # "unlearn_methods": ["retrain", "FT", "GA", "wfisher"],
