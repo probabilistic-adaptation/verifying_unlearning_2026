@@ -50,21 +50,21 @@ def cifar10_dataloaders_no_val(
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=False,
     )
     val_loader = DataLoader(
         val_set,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=False,
     )
     test_loader = DataLoader(
         test_set,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=False,
     )
 
     return train_loader, val_loader, test_loader
@@ -326,21 +326,21 @@ def cifar100_dataloaders_no_val(
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=False,
     )
     val_loader = DataLoader(
         val_set,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=False,
     )
     test_loader = DataLoader(
         test_set,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=False,
     )
 
     return train_loader, val_loader, test_loader

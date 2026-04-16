@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim
 import torch.utils.data
-import unlearn
+import unlearn._old
 import utils
 from trainer import validate
 import pickle
@@ -257,7 +257,7 @@ def main():
     if args.resume and checkpoint is not None:
         model, evaluation_result = checkpoint
     else:
-        #loard model and capture original activations
+        #load model and capture original activations
         checkpoint = torch.load(args.model_path, map_location=device)
         if "state_dict" in checkpoint.keys():
             checkpoint = checkpoint["state_dict"]

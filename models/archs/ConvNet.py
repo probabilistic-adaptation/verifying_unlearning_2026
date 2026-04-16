@@ -39,11 +39,6 @@ class ConvNet(nn.Module):
             nn.ReLU(),
             nn.Dropout(.2),
 
-            # nn.Conv2d(512, 1024, 3, 2, 1),
-            # nn.BatchNorm2d(1024),
-            # nn.ReLU(),
-            # nn.Dropout(.2),
-
             nn.AdaptiveMaxPool2d(1)
         )
 
@@ -60,9 +55,6 @@ class ConvNet(nn.Module):
             nn.Linear(n_flat, 128),
             nn.Dropout(.3),
             nn.ReLU(),
-            # nn.Linear(256, 64),
-            # nn.Dropout(.3),
-            # nn.ReLU(),
             nn.Linear(128, 10)
             )
         
@@ -75,8 +67,6 @@ class ConvNet(nn.Module):
         our previously defined subnetworks
         
         """
-        
-        # B, C, H, W = X.shape
 
         x = self.conv(X)
         x = self.flatten(x)

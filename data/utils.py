@@ -14,10 +14,10 @@ import time
 
 import numpy as np
 import torch
-from dataset import *
-from dataset import TinyImageNet
-from imagenet import prepare_data
-from models import *
+from data.dataset import *
+from data.dataset import TinyImageNet
+# from imagenet import prepare_data
+# from models import *
 from torchvision import transforms
 
 __all__ = [
@@ -31,11 +31,11 @@ __all__ = [
 
 
 def warmup_lr(epoch, step, optimizer, one_epoch_step, args):
-    overall_steps = args.warmup * one_epoch_step
+    overall_steps = args["warmup"] * one_epoch_step
     current_steps = epoch * one_epoch_step + step
 
-    lr = args.lr * current_steps / overall_steps
-    lr = min(lr, args.lr)
+    lr = args["lr"] * current_steps / overall_steps
+    lr = min(lr, args["lr"])
 
     for p in optimizer.param_groups:
         p["lr"] = lr
@@ -95,7 +95,7 @@ def dataset_convert_to_train(dataset):
 
 
 def dataset_convert_to_test(dataset, args=None):
-    if args.dataset == "TinyImagenet":
+    if args["dataset"] == "TinyImagenet":
         test_transform = transforms.Compose([])
     else:
         test_transform = transforms.Compose(
@@ -110,42 +110,42 @@ def dataset_convert_to_test(dataset, args=None):
 
 
 def setup_model_dataset(args):
-    if args.dataset == "cifar10":
+    if args["dataset"] == "cifar10":
         classes = 10
         normalization = NormalizeByChannelMeanStd(
             mean=[0.4914, 0.4822, 0.4465], std=[0.2470, 0.2435, 0.2616]
         )
         train_full_loader, val_loader, _ = cifar10_dataloaders(
-            batch_size=args.batch_size, data_dir=args.data, num_workers=args.workers
+            batch_size=args["batch_size"], data_dir="data/CIFAR10", num_workers=args["workers"]
         )
         marked_loader, _, test_loader = cifar10_dataloaders(
-            batch_size=args.batch_size,
-            data_dir=args.data,
-            num_workers=args.workers,
-            class_to_replace=args.class_to_replace,
-            num_indexes_to_replace=args.num_indexes_to_replace,
-            indexes_to_replace=args.indexes_to_replace,
-            seed=args.seed,
+            batch_size=args["batch_size"],
+            data_dir="data/CIFAR10",
+            num_workers=args["workers"],
+            class_to_replace=args["class_to_replace"],
+            num_indexes_to_replace=args["num_indexes_to_replace"],
+            indexes_to_replace=args["indexes_to_replace"],
+            seed=args["seed"],
             only_mark=True,
             shuffle=True,
-            no_aug=args.no_aug,
+            no_aug=args["no_aug"],
         )
 
-        if args.train_seed is None:
-            args.train_seed = args.seed
-        setup_seed(args.train_seed)
+        # if args["train_seed"] is None:
+        #     args["train_seed"] = args["seed"]
+        # setup_seed(args["train_seed"])
 
         # if args.imagenet_arch:
         #     model = model_dict[args.arch](num_classes=classes, imagenet=True)
         # else:
         #     model = model_dict[args.arch](num_classes=classes)
 
-        setup_seed(args.train_seed)
+        # setup_seed(args["train_seed"])
 
         # model.normalize = normalization
         # return model, train_full_loader, val_loader, test_loader, marked_loader
         return train_full_loader, val_loader, test_loader, marked_loader
-    # elif args.dataset == "svhn":
+    # elif args["dataset"] == "svhn":
     #     classes = 10
     #     normalization = NormalizeByChannelMeanStd(
     #         mean=[0.4377, 0.4438, 0.4728], std=[0.1201, 0.1231, 0.1052]
@@ -171,7 +171,7 @@ def setup_model_dataset(args):
 
     #     model.normalize = normalization
     #     return model, train_full_loader, val_loader, test_loader, marked_loader
-    # elif args.dataset == "cifar100":
+    # elif args["dataset"] == "cifar100":
     #     classes = 100
     #     normalization = NormalizeByChannelMeanStd(
     #         mean=[0.5071, 0.4866, 0.4409], std=[0.2673, 0.2564, 0.2762]
@@ -197,7 +197,7 @@ def setup_model_dataset(args):
     #         model = model_dict[args.arch](num_classes=classes)
     #     model.normalize = normalization
     #     return model, train_full_loader, val_loader, test_loader, marked_loader
-    # elif args.dataset == "TinyImagenet":
+    # elif args["dataset"] == "TinyImagenet":
     #     classes = 200
     #     normalization = NormalizeByChannelMeanStd(
     #         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -225,7 +225,7 @@ def setup_model_dataset(args):
     #     model.normalize = normalization
     #     return model, train_full_loader, val_loader, test_loader, marked_loader
 
-    # elif args.dataset == "imagenet":
+    # elif args["dataset"] == "imagenet":
     #     classes = 1000
     #     normalization = NormalizeByChannelMeanStd(
     #         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -255,7 +255,7 @@ def setup_model_dataset(args):
     #         val_loader = loaders["val"]
     #         return model, retain_loader, forget_loader, val_loader
 
-    # elif args.dataset == "cifar100_no_val":
+    # elif args["dataset"] == "cifar100_no_val":
     #     classes = 100
     #     normalization = NormalizeByChannelMeanStd(
     #         mean=[0.5071, 0.4866, 0.4409], std=[0.2673, 0.2564, 0.2762]
@@ -264,7 +264,7 @@ def setup_model_dataset(args):
     #         batch_size=args.batch_size, data_dir=args.data, num_workers=args.workers
     #     )
 
-    # elif args.dataset == "cifar10_no_val":
+    # elif args["dataset"] == "cifar10_no_val":
     #     classes = 10
     #     normalization = NormalizeByChannelMeanStd(
     #         mean=[0.4914, 0.4822, 0.4465], std=[0.2470, 0.2435, 0.2616]
@@ -379,14 +379,14 @@ def get_unlearn_loader(marked_loader, args):
     forget_dataset.data = forget_dataset.data[marked]
     forget_dataset.targets = -forget_dataset.targets[marked] - 1
     forget_loader = get_loader_from_dataset(
-        forget_dataset, batch_size=args.batch_size, seed=args.seed, shuffle=True
+        forget_dataset, batch_size=args["batch_size"], seed=args["seed"], shuffle=True
     )
     retain_dataset = copy.deepcopy(marked_loader.dataset)
     marked = retain_dataset.targets >= 0
     retain_dataset.data = retain_dataset.data[marked]
     retain_dataset.targets = retain_dataset.targets[marked]
     retain_loader = get_loader_from_dataset(
-        retain_dataset, batch_size=args.batch_size, seed=args.seed, shuffle=True
+        retain_dataset, batch_size=args["batch_size"], seed=args["seed"], shuffle=True
     )
     print("datasets length: ", len(forget_dataset), len(retain_dataset))
     return forget_loader, retain_loader
@@ -418,3 +418,78 @@ def get_poisoned_loader(poison_loader, unpoison_loader, test_loader, poison_func
     )
 
     return poisoned_loader, unpoison_loader, poisoned_full_loader, poisoned_test_loader
+
+
+
+def retain_to_train_and_val(
+    retain_loader,
+    seed: int = 1,
+):
+
+
+    retain_dataset = retain_loader.dataset
+    batch_size = retain_loader.batch_size
+    
+    train_transform = transforms.Compose(
+        [
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ColorJitter(brightness=0.05, contrast=0.1, saturation=0.1),
+            transforms.RandomRotation(degrees = 10),
+            transforms.ToTensor(),
+            transforms.Normalize(mean = [0.4914, 0.4822, 0.4465],std = [0.2023, 0.1994, 0.2010]), 
+        ]
+        )
+    
+    test_transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2023, 0.1994, 0.2010]), 
+        ]
+        )
+    # -------------------------------------------------------------------- #
+    # ----- repeating as much as possible from `cifar10_dataloaders` ----- #
+    # -------------------------------------------------------------------- #
+
+    retain_dataset.targets = np.array(retain_dataset.targets)
+    
+    rng = np.random.RandomState(seed)
+    valid_set = copy.deepcopy(retain_dataset)
+    valid_idx = []
+    for i in range(max(retain_dataset.targets) + 1):
+        class_idx = np.where(retain_dataset.targets == i)[0]
+        valid_idx.append(
+            rng.choice(class_idx, int(0.1 * len(class_idx)), replace=False)
+        )
+    valid_idx = np.hstack(valid_idx)
+    train_set = copy.deepcopy(retain_dataset)
+
+    valid_set.data = train_set.data[valid_idx]
+    valid_set.targets = train_set.targets[valid_idx]
+
+    train_idx = list(set(range(len(retain_dataset))) - set(valid_idx))
+    train_set.data = train_set.data[train_idx]
+    train_set.targets = train_set.targets[train_idx]
+
+    # assign transforms
+    train_set.transform = train_transform
+    valid_set.transform = test_transform
+
+    train_loader = DataLoader(
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=0
+        # worker_init_fn=_init_fn if seed is not None else None,
+    )
+    val_loader = DataLoader(
+        valid_set,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=0
+        # worker_init_fn=_init_fn if seed is not None else None,
+    )
+    print("SPLITTING RETAIN SET INTO TRAIN AND VAL:\n")
+    print(f"Dataset information: CIFAR-10\t {len(train_set)} images for training \t {len(valid_set)} images for validation\t")
+
+    return train_loader, val_loader

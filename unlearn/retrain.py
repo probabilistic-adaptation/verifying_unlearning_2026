@@ -4,6 +4,5 @@ from .impl import iterative_unlearn
 
 
 @iterative_unlearn
-def retrain(data_loaders, model, criterion, optimizer, epoch, args, mask=None, **kwargs):
-    retain_loader = data_loaders["retain"]
-    return train(retain_loader, model, criterion, optimizer, epoch, args, mask, **kwargs)
+def retrain(retain_loader, model, criterion, optimizer, epoch, print_freq):
+    return train(retain_loader, model, criterion, optimizer, epoch, print_freq)

@@ -4,6 +4,7 @@ import os
 from config import parameters
 import torch
 import torch.nn as nn
+import torch.optim
 
 
 
@@ -11,7 +12,6 @@ from models.archs.ConvNet import ConvNet
 from config import parameters
 from unlearn.GA import GA
 from data.utils import get_unlearn_loader, setup_model_dataset
-# from data.dataset import cifar10_dataloaders
 
 
 
@@ -32,6 +32,10 @@ criterion = nn.CrossEntropyLoss()
 for seed in seeds:
     
     print(f"\n=== Starting experiment with seed {seed} ===\n")
+
+
+    # ... apply seed to params
+    parameters["seed"] = seed
 
     # ... create seed-specific directories
     seed_dir = f"results_seed{seed}"
@@ -119,14 +123,21 @@ for seed in seeds:
     # }
 
 
-    # ... define a dataset, forget set, and retain set
+    # # ... define a dataset, forget set, and retain set
     train_full_loader, val_loader, test_loader, marked_loader = setup_model_dataset(args = parameters)
     forget_loader, retain_loader = get_unlearn_loader(marked_loader = marked_loader, args = parameters)
 
-    # ... apply GA for some epochs
+    # ... init optimizer
+    optimizer = torch.optim.SGD(
+        base_model.parameters(),
+        parameters["LR_for_unlearning"]["GA"],
+        momentum=parameters["momentum"],
+        weight_decay=parameters["weight_decay"],
+    )
+    # # ... apply GA for some epochs
     for k in range(parameters["epochs_for_unlearning"]["GA"]):
         
-        top1_acc = GA(forget_loader, base_model, criterion, arg = parameters, mask = None)
+        top1_acc = GA(forget_loader, base_model, criterion, mask = None, optimizer = optimizer, epoch = k, args = parameters)
 
 
 
