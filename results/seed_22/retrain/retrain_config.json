@@ -1,0 +1,11 @@
+{
+    "num_runs_each": 1,
+    "num_epochs": 30,
+    "starting_LR": 0.001,
+    "weight_decay": 0.0007,
+    "lr_scheduler_params": {
+        "factor": 0.5,
+        "patience": 2,
+        "threshold": 0.01
+    }
+}
