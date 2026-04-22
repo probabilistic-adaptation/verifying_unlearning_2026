@@ -1,0 +1,47 @@
+{
+    "description": "testing gitignore of model checkpoints and pretrained subfolder logic",
+    "device": "mps",
+    "model_class": "CIFARNET",
+    "num_runs": 1,
+    "retrain_from_scratch": true,
+    "train_base": true,
+    "data": {
+        "batch_size": 256,
+        "num_workers": 0
+    },
+    "training": {
+        "num_epochs": 1,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "lr_scheduler_params": {
+            "factor": 0.5,
+            "patience": 2,
+            "threshold": 0.01
+        },
+        "batch_print_freq": 150
+    },
+    "unlearning": {
+        "methods": [
+            "GA"
+        ],
+        "metrics": [
+            "forget_acc",
+            "retain_acc"
+        ],
+        "num_epochs": 1,
+        "measure_every": 1,
+        "save_checkpoints_at": [
+            1,
+            6,
+            12
+        ],
+        "classes_to_unlearn": [
+            0
+        ],
+        "percents_to_unlearn": null,
+        "learning_rate": {
+            "GA": 5e-05
+        }
+    },
+    "GRAND_SEED": 3
+}
