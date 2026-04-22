@@ -176,5 +176,11 @@ pyrightconfig.json
 # wandb
 wandb/
 
+# CIFAR10 data
+data/CIFAR10/
+
+# large model checkpoints
+models/model_checkpoints/
+
 # End of https://www.toptal.com/developers/gitignore/api/python
 
