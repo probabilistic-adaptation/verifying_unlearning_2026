@@ -5,6 +5,50 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 
+def accuracy(output, target, topk=(1,)):
+    """Computes the precision@k for the specified values of k"""
+    maxk = max(topk)
+    batch_size = target.size(0)
+
+    _, pred = output.topk(maxk, 1, True, True)
+    pred = pred.t()
+    correct = pred.eq(target.view(1, -1).expand_as(pred))
+
+    res = []
+    for k in topk:
+        correct_k = correct[:k].view(-1).float().sum(0)
+        res.append(correct_k.mul_(100.0 / batch_size))
+    return res
+
+def warmup_lr(epoch, step, optimizer, one_epoch_step, args):
+    overall_steps = args["warmup"] * one_epoch_step
+    current_steps = epoch * one_epoch_step + step
+
+    lr = args["lr"] * current_steps / overall_steps
+    lr = min(lr, args["lr"])
+
+    for p in optimizer.param_groups:
+        p["lr"] = lr
+
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+
+
 def get_model_weight_norm(model):
     total_norm = 0.0
     for p in model.parameters():
@@ -33,19 +77,6 @@ def get_memory_footprint():
         vram_gb = torch.mps.driver_allocated_memory() / (1024**3)
         
     return ram_gb, vram_gb
-
-
-def check_accuracy(model, data_loader, device):
-    
-    model.eval()
-    num_correct = 0
-    for X, y in data_loader:
-        X, y = X.to(device), y.to(device)
-        with torch.no_grad(): # Gradients aren't needed just for test evaluation
-            y_hat = model(X).argmax(-1)
-        num_correct += (y_hat == y).sum().item()
-    return num_correct / len(data_loader.dataset)
-
 
 
 def evaluate(model, data_loader, criterion, device, print_predictions = False):
@@ -80,11 +111,10 @@ def evaluate(model, data_loader, criterion, device, print_predictions = False):
 
     return total_loss / len(data_loader), correct / total
 
-def training_regimen(model, train_loader, val_loader, opt, criterion, scheduler, device, num_epochs = 10, best_val_loss = torch.inf, model_path = f"model_checkpoints/best_CIFAR10_model_{datetime.today().strftime('%Y-%m-%d')}.pth"):
+def training_regimen(model, train_loader, val_loader, opt, criterion, scheduler, device, num_epochs = 10, best_val_loss = torch.inf, model_path = f"model.pth", print_freq = 100):
     
     # For each epoch ...
-    for k in range(num_epochs):
-
+    for k in range(1, num_epochs + 1):
 
         print(f" ----- EPOCH {k} ----- \n")
         # ... grab the current learning rate, 
@@ -101,7 +131,7 @@ def training_regimen(model, train_loader, val_loader, opt, criterion, scheduler,
             loss.backward()
             opt.step()
 
-            if i % 100 == 0:
+            if i % print_freq == 0:
                 print(f"Batch {i}: Loss = {loss.cpu().item():.4f}")
  
         # ... eval on validation set
@@ -129,12 +159,9 @@ def training_regimen(model, train_loader, val_loader, opt, criterion, scheduler,
               f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f} | "
               f"RAM: {ram:.2f}GB | VRAM: {vram:.2f}GB | Weight Norm: {current_norm:.3f}")
 
-        # ... and if this is the best so far, save out
-
         # ... and, if this is the best model so far, save it.
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            
             checkpoint = {
                 'epoch': k,
                 'model_state_dict': model.state_dict(),
@@ -142,9 +169,8 @@ def training_regimen(model, train_loader, val_loader, opt, criterion, scheduler,
                 'scheduler_state_dict': scheduler.state_dict(),
                 'best_val_loss': best_val_loss,
             }
-            
             torch.save(checkpoint, model_path, _use_new_zipfile_serialization = False)
-            print(f"--- Epoch {k}: New best model saved! ---")
+            print(f"--- Epoch {k}: New best model saved! ---\n")
         
     return model, opt, scheduler
 
@@ -219,7 +245,7 @@ def run_inference(model, data_loader, device):
 
     # Create dataloader
 
-    print(f"\nRunning inference on {len(data_loader)} test items...")
+    print(f"\nRunning inference on {len(data_loader)} batches...")
     accuracy, preds, labels, times = full_evaluate(model, data_loader, device)
 
     # Summary

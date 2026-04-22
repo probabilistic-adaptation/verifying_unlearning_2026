@@ -3,7 +3,7 @@ import argparse
 import pickle
 import pandas as pd
 # from unlearning_metrics.evaluate.config import parameters
-from config import parameters
+from _old.config import parameters
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--results_dir", type=str, help="Directory containing results")

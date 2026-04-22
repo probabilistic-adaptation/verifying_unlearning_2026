@@ -3,7 +3,7 @@ import time
 
 import torch
 # import data.utils
-from data.utils import AverageMeter, accuracy
+from trainer.utils import AverageMeter, accuracy
 
 # from .impl import iterative_unlearn
 
