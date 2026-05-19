@@ -16,7 +16,7 @@ def measure_unlearning_metrics(name, epoch, metrics, model, dataloaders, device)
         results["forget_acc"] = forget_acc
 
     if "retain_acc" in metrics:
-        retain_acc = check_accuracy(model, data_loader = dataloaders["retain_test"], device = device)
+        retain_acc = check_accuracy(model, data_loader = dataloaders["retain_train"], device = device)
         results["retain_acc"] = retain_acc
 
     return results
