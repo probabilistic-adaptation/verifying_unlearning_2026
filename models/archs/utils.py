@@ -2,7 +2,7 @@ import torch
 from models.archs.ConvNet import ConvNet
 from models.archs.VGG import vgg11_bn
 from models.archs.CIFARNET import CIFARNET
-from models.archs.ResNets import resnet20s
+from models.archs.ResNet import resnet18
 
 
 
@@ -19,7 +19,7 @@ def init_model(model_class, checkpoint_path=None):
     elif model_class == "CIFARNET":
         model = CIFARNET()
     elif model_class == "ResNet":
-        model = resnet20s()
+        model = resnet18()
 
     else:
         raise NotImplementedError(f"{model_class} is not an implemented model_class")
