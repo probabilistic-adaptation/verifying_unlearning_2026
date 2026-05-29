@@ -3,7 +3,8 @@ import os
 import time
 
 import torch
-from data.utils import accuracy, AverageMeter
+from trainer.utils import accuracy, AverageMeter
+import wandb
 
 # from imagenet import get_x_y_from_data_dict
 
@@ -131,51 +132,3 @@ from data.utils import accuracy, AverageMeter
 
 #     return top1.avg
 
-
-def train(train_loader, model, criterion, optimizer, epoch, print_freq, device):
-
-    """
-    One epoch of training for a generic training dataset, model, criterion, and optimizer
-    """
-    
-    losses = AverageMeter()
-    top1 = AverageMeter()
-
-    # switch to train mode
-    model.train()
-
-    start = time.time()
-    for i, (image, target) in enumerate(train_loader):
-
-        image = image.to(device)
-        target = target.to(device)
-
-        # compute output
-        output_clean = model(image)
-
-        loss = criterion(output_clean, target)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        output = output_clean.float()
-        loss = loss.float()
-        # measure accuracy and record loss
-        prec1 = accuracy(output.data, target)[0]
-
-        losses.update(loss.item(), image.size(0))
-        top1.update(prec1.item(), image.size(0))
-
-        if (i + 1) % print_freq == 0:
-            end = time.time()
-            print(
-                f"Epoch: [{epoch}][{i}/{len(train_loader)}]\t"
-                f"Loss {losses.val:.4f} ({losses.avg:.4f})\t"
-                f"Accuracy {top1.val:.3f} ({top1.avg:.3f})\t"
-                f"Time {end - start:.2f}"
-            )
-            start = time.time()
-
-    print("train_accuracy {top1.avg:.3f}".format(top1=top1))
-
-    return model, top1.avg, 

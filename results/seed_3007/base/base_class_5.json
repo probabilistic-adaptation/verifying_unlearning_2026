@@ -1,0 +1,33 @@
+{
+    "forget_loss": 0.20714519400596618,
+    "forget_acc": 92.55999995117187,
+    "forget_entr": -92.59788670654297,
+    "forget_m_entr": -194015.623525,
+    "retain_loss": 0.10411059575743145,
+    "retain_acc": 96.38666669108073,
+    "retain_entr": -96.13879917399089,
+    "retain_m_entr": -191737.06721666668,
+    "test_loss": 0.30514788096942086,
+    "test_acc": 90.4,
+    "test_entr": -103.39978107681274,
+    "test_m_entr": -206576.3467421875,
+    "MIA": {
+        "correctness": {
+            "retain_test_member": 0.9662222222222222,
+            "forget_non_member": 0.07520000000000004
+        },
+        "confidence": {
+            "retain_test_member": 0.9435555555555556,
+            "forget_non_member": 0.0
+        },
+        "entropy": {
+            "retain_test_member": 0.9157777777777778,
+            "forget_non_member": 1.0
+        },
+        "m_entropy": {
+            "retain_test_member": 0.9434444444444444,
+            "forget_non_member": 0.9998
+        }
+    },
+    "type": "base"
+}

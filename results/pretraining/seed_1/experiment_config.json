@@ -1,0 +1,24 @@
+{
+    "description": "Pre-training ResNet for a select number of epochs",
+    "device": "mps",
+    "model_class": "ResNet",
+    "data": {
+        "batch_size": 1024,
+        "num_workers": 0
+    },
+    "training": {
+        "num_epochs": [
+            1,
+            20,
+            30,
+            50,
+            75,
+            100
+        ],
+        "num_runs": 3,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_print_freq": 5
+    },
+    "GRAND_SEED": 1
+}

@@ -14,8 +14,8 @@ import time
 
 import numpy as np
 import torch
-from data.dataloaders import *
-from data.dataloaders import TinyImageNet
+# from data.dataloaders import *
+# from data.dataloaders import TinyImageNet
 # from imagenet import prepare_data
 # from models import *
 from torchvision import transforms
@@ -30,16 +30,18 @@ def setup_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 
-def get_loader_from_dataset(dataset, batch_size, seed=1, shuffle=True):
+def get_loader_from_dataset(dataset, batch_size, shuffle=True):
     return torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, num_workers=0, pin_memory=True, shuffle=shuffle
     )
 
 
-def split_forget_retain(marked_loader, batch_size, seed, shuffle = True):
+def split_forget_retain(marked_loader, batch_size, shuffle = True):
     """Splits the marked dataset into two dataloaders: one for the forget set and one for the retain set
     
     `marked_loader` for a training set should set shuffle = True, otherwise False
+
+    This by default "unmarks" the froget set by by undoing the negation applied to targets that originally "marked" them
     """
     
     # make forget set 
@@ -47,14 +49,14 @@ def split_forget_retain(marked_loader, batch_size, seed, shuffle = True):
     marked = forget_dataset.targets < 0
     forget_dataset.data = forget_dataset.data[marked]
     forget_dataset.targets = -forget_dataset.targets[marked] - 1
-    forget_loader = get_loader_from_dataset(forget_dataset, batch_size=batch_size, seed=seed, shuffle=shuffle)
+    forget_loader = get_loader_from_dataset(forget_dataset, batch_size=batch_size, shuffle=shuffle)
 
     # make retain set
     retain_dataset = copy.deepcopy(marked_loader.dataset)
     marked = retain_dataset.targets >= 0
     retain_dataset.data = retain_dataset.data[marked]
     retain_dataset.targets = retain_dataset.targets[marked]
-    retain_loader = get_loader_from_dataset(retain_dataset, batch_size=batch_size, seed=seed, shuffle=shuffle)
+    retain_loader = get_loader_from_dataset(retain_dataset, batch_size=batch_size, shuffle=shuffle)
 
     print("Forget set:", len(forget_dataset), "items")
     print("Retain set:", len(retain_dataset), "items")
@@ -62,6 +64,37 @@ def split_forget_retain(marked_loader, batch_size, seed, shuffle = True):
     return forget_loader, retain_loader
 
 
+
+def split_random(dataloader, p, seed, batch_size, shuffle = True):
+
+    base_dataset = dataloader.dataset
+
+    rng = np.random.RandomState(seed)
+    set_two_idx = []
+    for i in range(max(base_dataset.targets) + 1):
+        class_idx = np.where(base_dataset.targets == i)[0]
+        set_two_idx.append(
+            rng.choice(class_idx, int(p * len(class_idx)), replace=False)
+        )
+    set_two_idx = np.hstack(set_two_idx)
+    set_one_idx = list(set(range(len(base_dataset))) - set(set_two_idx))
+
+    set_one = copy.deepcopy(base_dataset)
+    set_two = copy.deepcopy(base_dataset)
+
+    set_one.data = base_dataset.data[set_one_idx]
+    set_one.targets = base_dataset.targets[set_one_idx]
+
+    set_two.data = base_dataset.data[set_two_idx]
+    set_two.targets = base_dataset.targets[set_two_idx]
+
+    dataloader_one = get_loader_from_dataset(set_one, batch_size = batch_size, shuffle=shuffle)
+    dataloader_two = get_loader_from_dataset(set_two, batch_size = batch_size, shuffle=shuffle)
+
+    print("Split one:", len(dataloader_one.dataset), "items")
+    print("Split two:", len(dataloader_two.dataset), "items\n")
+
+    return dataloader_one, dataloader_two
 
 
 

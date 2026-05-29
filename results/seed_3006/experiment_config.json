@@ -1,0 +1,37 @@
+{
+    "description": "Testing new retain_one vs retain_two split for MIAs",
+    "device": "mps",
+    "model_class": "ResNet",
+    "num_runs": 1,
+    "retrain_from_scratch": true,
+    "train_base": false,
+    "data": {
+        "batch_size": 512,
+        "num_workers": 0
+    },
+    "training": {
+        "num_epochs": 1,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_print_freq": 5
+    },
+    "unlearning": {
+        "methods": [
+            "GA"
+        ],
+        "num_epochs": 1,
+        "measure_every": 1,
+        "save_checkpoints_at": [
+            5
+        ],
+        "classes_to_unlearn": [
+            5
+        ],
+        "percents_to_unlearn": null,
+        "learning_rate": {
+            "GA": 5e-05
+        },
+        "batch_print_freq": 1
+    },
+    "GRAND_SEED": 3006
+}

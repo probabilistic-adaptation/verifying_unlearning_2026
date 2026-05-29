@@ -2,7 +2,7 @@ import sys
 import time
 
 import torch
-# import data.utils
+import wandb
 from trainer.utils import AverageMeter, accuracy
 
 # from .impl import iterative_unlearn
@@ -19,11 +19,13 @@ sys.path.append(".")
 
 
 # @iterative_unlearn
-def GA(forget_loader, model, criterion, optimizer, epoch, print_freq, device):
+def GA(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True):
     
     losses = AverageMeter()
     top1 = AverageMeter()
 
+    forget_loader = dataloaders["forget"]
+    
     start = time.time()
     
     for i, (image, target) in enumerate(forget_loader):
@@ -55,6 +57,17 @@ def GA(forget_loader, model, criterion, optimizer, epoch, print_freq, device):
                 f"Accuracy {top1.val:.3f} ({top1.avg:.3f})\t"
                 f"Time {end - start:.2f}"
             )
+
+            if w_and_b:
+                wandb.log(
+                    {
+                        "train_loss": losses.val,
+                        "train_loss_avg": losses.avg,
+                        "train_acc": top1.val,
+                        "train_acc_avg": top1.avg,
+                    }
+                )
+                
             start = time.time()
 
     # print("train_accuracy {top1.avg:.3f}".format(top1=top1))

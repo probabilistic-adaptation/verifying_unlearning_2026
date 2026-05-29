@@ -1,7 +1,7 @@
-from .GA import GA,GA_l1
+from .GA import GA, GA_l1
 from .RL import RL
-from .FT import FT,FT_l1
-from .fisher import fisher,fisher_new
+from .FT import FT, FT_l1
+from .fisher import fisher, fisher_new
 from .retrain import retrain
 from .impl import load_unlearn_checkpoint, save_unlearn_checkpoint
 from .Wfisher import Wfisher

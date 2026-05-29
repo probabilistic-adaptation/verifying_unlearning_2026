@@ -1,0 +1,22 @@
+{
+    "forget_acc": 0.9966,
+    "MIA": {
+        "correctness": {
+            "retain_test_member": 0.9346666666666666,
+            "forget_non_member": 0.0033999999999999586
+        },
+        "confidence": {
+            "retain_test_member": 0.8446666666666667,
+            "forget_non_member": 0.0
+        },
+        "entropy": {
+            "retain_test_member": 0.8486666666666667,
+            "forget_non_member": 1.0
+        },
+        "m_entropy": {
+            "retain_test_member": 0.841,
+            "forget_non_member": 0.9914
+        }
+    },
+    "type": "base"
+}

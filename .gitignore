@@ -6,6 +6,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
+data/__pycache__/
+evaluation/__pycache__/
+trainer/__pycache__/
+unlearn/__pycache__/
 
 # C extensions
 *.so

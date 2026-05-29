@@ -1,0 +1,27 @@
+{
+    "forget_acc": 0.9262,
+    "MIA": {
+        "correctness": {
+            "retain_test_member": 0.9395555555555556,
+            "forget_non_member": 0.0746
+        },
+        "confidence": {
+            "retain_test_member": 0.8526666666666667,
+            "forget_non_member": 0.0
+        },
+        "entropy": {
+            "retain_test_member": 0.8585555555555555,
+            "forget_non_member": 1.0
+        },
+        "m_entropy": {
+            "retain_test_member": 0.8501111111111112,
+            "forget_non_member": 0.9978
+        }
+    },
+    "type": "unlearn",
+    "epoch": 7,
+    "run": 3,
+    "unlearning_type": "class",
+    "unlearning_item": 5,
+    "method": "GA"
+}

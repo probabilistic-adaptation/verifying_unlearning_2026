@@ -1,0 +1,41 @@
+{
+    "description": "GA - MIA vs forget acc - class 5",
+    "device": "mps",
+    "model_class": "ResNet",
+    "num_runs": 3,
+    "retrain_from_scratch": false,
+    "train_base": false,
+    "data": {
+        "batch_size": 512,
+        "num_workers": 0
+    },
+    "training": {
+        "num_epochs": 10,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_print_freq": 5
+    },
+    "unlearning": {
+        "methods": [
+            "GA"
+        ],
+        "metrics": [
+            "forget_acc",
+            "MIA"
+        ],
+        "num_epochs": 10,
+        "measure_every": 1,
+        "save_checkpoints_at": [
+            10
+        ],
+        "classes_to_unlearn": [
+            5
+        ],
+        "percents_to_unlearn": null,
+        "learning_rate": {
+            "GA": 0.0001
+        },
+        "batch_print_freq": 1
+    },
+    "GRAND_SEED": 3004
+}
