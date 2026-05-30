@@ -1,0 +1,44 @@
+{
+    "description": "Testing base training and unlearning on SVHN",
+    "device": "mps",
+    "model_class": "ResNet",
+    "num_runs": 1,
+    "retrain_from_scratch": false,
+    "train_base": true,
+    "measure_base_results": true,
+    "data": {
+        "dataset": "SVHN",
+        "batch_size": 512,
+        "num_workers": 0
+    },
+    "training": {
+        "num_epochs": 5,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_print_freq": 5
+    },
+    "unlearning": {
+        "methods": [
+            "FT",
+            "GA"
+        ],
+        "num_epochs": 5,
+        "measure_every": 1,
+        "save_checkpoints_at": [
+            5
+        ],
+        "classes_to_unlearn": [
+            5
+        ],
+        "percents_to_unlearn": null,
+        "learning_rate": {
+            "GA": 5e-05,
+            "FT": 0.001
+        },
+        "batch_print_freq": {
+            "GA": 1,
+            "FT": 8
+        }
+    },
+    "GRAND_SEED": 3009
+}

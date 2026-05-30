@@ -20,143 +20,142 @@ from data.utils import get_loader_from_dataset
 
 
 
-
-def cifar10_dataloaders(
-    batch_size=128,
-    data_dir="datasets/cifar10",
-    num_workers=0,
-    class_to_replace: int = None,
-    percent_to_replace=None,
-    seed: int = 1,
-    only_mark: bool = False,
-    val = True
-):
+# def cifar10_dataloaders(
+#     batch_size=128,
+#     data_dir="datasets/cifar10",
+#     num_workers=0,
+#     class_to_replace: int = None,
+#     percent_to_replace=None,
+#     seed: int = 1,
+#     only_mark: bool = False,
+#     val = True
+# ):
     
-    # --- set transforms for both train and test splits --- #
-    train_transform = transforms.Compose(
-        [
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ColorJitter(brightness=0.05, contrast=0.1, saturation=0.1),
-            transforms.RandomRotation(degrees = 10),
-            transforms.ToTensor(),
-            transforms.Normalize(mean = [0.4914, 0.4822, 0.4465],std = [0.2023, 0.1994, 0.2010]), 
-        ]
-    )
+#     # --- set transforms for both train and test splits --- #
+#     train_transform = transforms.Compose(
+#         [
+#             transforms.RandomCrop(32, padding=4),
+#             transforms.RandomHorizontalFlip(),
+#             transforms.ColorJitter(brightness=0.05, contrast=0.1, saturation=0.1),
+#             transforms.RandomRotation(degrees = 10),
+#             transforms.ToTensor(),
+#             transforms.Normalize(mean = [0.4914, 0.4822, 0.4465],std = [0.2023, 0.1994, 0.2010]), 
+#         ]
+#     )
 
-    test_transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2023, 0.1994, 0.2010]), 
-        ]
-    )
+#     test_transform = transforms.Compose(
+#         [
+#             transforms.ToTensor(),
+#             transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2023, 0.1994, 0.2010]), 
+#         ]
+#     )
 
 
     
-    # --- load the dataset --- #
-    train_set = CIFAR10(data_dir, train=True, transform=train_transform, download=True)
-    test_set = CIFAR10(data_dir, train=False, transform=test_transform, download=True)
-    train_set.targets = np.array(train_set.targets)
-    test_set.targets = np.array(test_set.targets)
+#     # --- load the dataset --- #
+#     train_set = CIFAR10(data_dir, train=True, transform=train_transform, download=True)
+#     test_set = CIFAR10(data_dir, train=False, transform=test_transform, download=True)
+#     train_set.targets = np.array(train_set.targets)
+#     test_set.targets = np.array(test_set.targets)
 
-    # IF WE NEED A VALIDATION SET, SPLIT IT OFF FROM THE TRAINING SET (10% of each class)
-    # and then reconfigure train set to accommodate
-    if val:
-        rng = np.random.RandomState(seed)
-        valid_set = copy.deepcopy(train_set)
-        valid_idx = []
-        for i in range(max(train_set.targets) + 1):
-            class_idx = np.where(train_set.targets == i)[0]
-            valid_idx.append(
-                rng.choice(class_idx, int(0.1 * len(class_idx)), replace=False)
-            )
-        valid_idx = np.hstack(valid_idx)
-        train_set_copy = copy.deepcopy(train_set)
+#     # IF WE NEED A VALIDATION SET, SPLIT IT OFF FROM THE TRAINING SET (10% of each class)
+#     # and then reconfigure train set to accommodate
+#     if val:
+#         rng = np.random.RandomState(seed)
+#         valid_set = copy.deepcopy(train_set)
+#         valid_idx = []
+#         for i in range(max(train_set.targets) + 1):
+#             class_idx = np.where(train_set.targets == i)[0]
+#             valid_idx.append(
+#                 rng.choice(class_idx, int(0.1 * len(class_idx)), replace=False)
+#             )
+#         valid_idx = np.hstack(valid_idx)
+#         train_set_copy = copy.deepcopy(train_set)
 
-        valid_set.data = train_set_copy.data[valid_idx]
-        valid_set.targets = train_set_copy.targets[valid_idx]
+#         valid_set.data = train_set_copy.data[valid_idx]
+#         valid_set.targets = train_set_copy.targets[valid_idx]
 
-        train_idx = list(set(range(len(train_set))) - set(valid_idx))
+#         train_idx = list(set(range(len(train_set))) - set(valid_idx))
 
-        train_set.data = train_set_copy.data[train_idx]
-        train_set.targets = train_set_copy.targets[train_idx]
+#         train_set.data = train_set_copy.data[train_idx]
+#         train_set.targets = train_set_copy.targets[train_idx]
 
-    # --- replace some data if specified --- #
+#     # --- replace some data if specified --- #
 
-    # ------ cant specify both class and number to replace
-    if class_to_replace is not None and percent_to_replace is not None:
-        raise ValueError("Only one of `class_to_replace` and `percent_to_replace` can be specified")
+#     # ------ cant specify both class and number to replace
+#     if class_to_replace is not None and percent_to_replace is not None:
+#         raise ValueError("Only one of `class_to_replace` and `percent_to_replace` can be specified")
 
 
-    if class_to_replace is not None:
+#     if class_to_replace is not None:
         
-        # replace classes in training, val, and test (modified in place)
-        # --- by default replacing ALL indexes of class
-        replace_class(train_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
-        if val:
-            replace_class(valid_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
-        replace_class(test_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
+#         # replace classes in training, val, and test (modified in place)
+#         # --- by default replacing ALL indexes of class
+#         replace_class(train_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
+#         if val:
+#             replace_class(valid_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
+#         replace_class(test_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
 
-        # if num_indexes_to_replace is None or num_indexes_to_replace == 4500:
-        #     test_set.data = test_set.data[test_set.targets != class_to_replace]
-        #     test_set.targets = test_set.targets[test_set.targets != class_to_replace]
+#         # if num_indexes_to_replace is None or num_indexes_to_replace == 4500:
+#         #     test_set.data = test_set.data[test_set.targets != class_to_replace]
+#         #     test_set.targets = test_set.targets[test_set.targets != class_to_replace]
 
-    if percent_to_replace is not None:
-        # replace some percentage across all classes (modified in place)
-        replace_percent(train_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
-        if val:
-            replace_percent(valid_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
-        replace_percent(test_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
+#     if percent_to_replace is not None:
+#         # replace some percentage across all classes (modified in place)
+#         replace_percent(train_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
+#         if val:
+#             replace_percent(valid_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
+#         replace_percent(test_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
 
-    loader_args = {"num_workers": 0, "pin_memory": False}
+#     loader_args = {"num_workers": 0, "pin_memory": False}
 
-    def _init_fn(worker_id):
-        np.random.seed(int(seed))
+#     def _init_fn(worker_id):
+#         np.random.seed(int(seed))
 
-    train_loader = DataLoader(
-        train_set,
-        batch_size=batch_size,
-        shuffle=True,
-        worker_init_fn=_init_fn if seed is not None else None,
-        **loader_args,
-    )
+#     train_loader = DataLoader(
+#         train_set,
+#         batch_size=batch_size,
+#         shuffle=True,
+#         worker_init_fn=_init_fn if seed is not None else None,
+#         **loader_args,
+#     )
     
-    if val:
-        val_loader = DataLoader(
-            valid_set,
-            batch_size=batch_size,
-            shuffle=False,
-            worker_init_fn=_init_fn if seed is not None else None,
-            **loader_args,
-        )
-    else:
-        val_loader = None
+#     if val:
+#         val_loader = DataLoader(
+#             valid_set,
+#             batch_size=batch_size,
+#             shuffle=False,
+#             worker_init_fn=_init_fn if seed is not None else None,
+#             **loader_args,
+#         )
+#     else:
+#         val_loader = None
 
-    test_loader = DataLoader(
-        test_set,
-        batch_size=batch_size,
-        shuffle=False,
-        worker_init_fn=_init_fn if seed is not None else None,
-        **loader_args,
-    )
+#     test_loader = DataLoader(
+#         test_set,
+#         batch_size=batch_size,
+#         shuffle=False,
+#         worker_init_fn=_init_fn if seed is not None else None,
+#         **loader_args,
+#     )
 
-    # --- print what we did --- #
+#     # --- print what we did --- #
 
-    print("="*10 + " DATALOADER INFO")
-    print("Dataset: CIFAR-10")
-    print(f"Train: {len(train_set)} images for training")
-    if val:
-        print(f"Val: {len(valid_set)} images for validation")
-    print(f"Test: {len(test_set)} images for testing")
-    if class_to_replace is not None:
-        print(f"Replaced class {class_to_replace} in train")
-    if percent_to_replace is not None:
-        print(f"Replaced {percent_to_replace:.1f}% of labels across all classes in train")
-    print("Training augmentation = randomcrop(32,4) + randomhorizontalflip + colorjitter + randomrotation + normalize")
-    print("Validation/Test augmentation = normalize")
-    print("\n")
+#     print("="*10 + " DATALOADER INFO")
+#     print("Dataset: CIFAR-10")
+#     print(f"Train: {len(train_set)} images for training")
+#     if val:
+#         print(f"Val: {len(valid_set)} images for validation")
+#     print(f"Test: {len(test_set)} images for testing")
+#     if class_to_replace is not None:
+#         print(f"Replaced class {class_to_replace} in train")
+#     if percent_to_replace is not None:
+#         print(f"Replaced {percent_to_replace:.1f}% of labels across all classes in train")
+#     print("Training augmentation = randomcrop(32,4) + randomhorizontalflip + colorjitter + randomrotation + normalize")
+#     print("Validation/Test augmentation = normalize")
+#     print("\n")
 
-    return train_loader, val_loader, test_loader
+#     return train_loader, val_loader, test_loader
 
 
 def replace_indexes(
@@ -316,8 +315,371 @@ def unmark_dataset(dataset):
     labels[marked_mask] = -labels[marked_mask] - 1
 
 
+
+
+def generic_dataloaders(
+    train_set, 
+    test_set, 
+    batch_size=128,
+    num_workers=0,
+    class_to_replace: int = None,
+    percent_to_replace=None,
+    seed: int = 1,
+    only_mark: bool = False,
+    val = True):
+
+
+    # access labels/targets, and just call them "targets", ...
+    try:
+        train_set.targets = np.array(train_set.targets)
+        test_set.targets = np.array(test_set.targets)
+        
+    # ... even if they're originally called "labels" , 
+    except:
+        train_set.targets = np.array(train_set.labels)
+        test_set.targets = np.array(test_set.labels)
+    
+    # ... or "_labels" .
+    else:
+        train_set.targets = np.array(train_set._labels)
+        test_set.targets = np.array(test_set._labels)
+
+    # IF WE NEED A VALIDATION SET, SPLIT IT OFF FROM THE TRAINING SET (10% of each class)
+    # and then reconfigure train set to accommodate
+    if val:
+        rng = np.random.RandomState(seed)
+        valid_set = copy.deepcopy(train_set)
+        valid_idx = []
+        for i in range(max(train_set.targets) + 1):
+            class_idx = np.where(train_set.targets == i)[0]
+            valid_idx.append(
+                rng.choice(class_idx, int(0.1 * len(class_idx)), replace=False)
+            )
+        valid_idx = np.hstack(valid_idx)
+        train_set_copy = copy.deepcopy(train_set)
+
+        valid_set.data = train_set_copy.data[valid_idx]
+        valid_set.targets = train_set_copy.targets[valid_idx]
+
+        train_idx = list(set(range(len(train_set))) - set(valid_idx))
+
+        train_set.data = train_set_copy.data[train_idx]
+        train_set.targets = train_set_copy.targets[train_idx]
+
+        # --- replace some data if specified --- #
+
+    # ------ cant specify both class and number to replace
+    if class_to_replace is not None and percent_to_replace is not None:
+        raise ValueError("Only one of `class_to_replace` and `percent_to_replace` can be specified")
+
+
+    if class_to_replace is not None:
+        
+        # replace classes in training, val, and test (modified in place)
+        # --- by default replacing ALL indexes of class
+        replace_class(train_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
+        if val:
+            replace_class(valid_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
+        replace_class(test_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
+
+        # if num_indexes_to_replace is None or num_indexes_to_replace == 4500:
+        #     test_set.data = test_set.data[test_set.targets != class_to_replace]
+        #     test_set.targets = test_set.targets[test_set.targets != class_to_replace]
+
+    if percent_to_replace is not None:
+        # replace some percentage across all classes (modified in place)
+        replace_percent(train_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
+        if val:
+            replace_percent(valid_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
+        replace_percent(test_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
+
+    loader_args = {"num_workers": 0, "pin_memory": False}
+
+    def _init_fn(worker_id):
+        np.random.seed(int(seed))
+
+    train_loader = DataLoader(
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+    
+    if val:
+        val_loader = DataLoader(
+            valid_set,
+            batch_size=batch_size,
+            shuffle=False,
+            worker_init_fn=_init_fn if seed is not None else None,
+            **loader_args,
+        )
+    else:
+        val_loader = None
+
+    test_loader = DataLoader(
+        test_set,
+        batch_size=batch_size,
+        shuffle=False,
+        worker_init_fn=_init_fn if seed is not None else None,
+        **loader_args,
+    )
+
+    return train_loader, val_loader, test_loader
+
+
+def get_dataloader_method(name = "CIFAR10"):
+    
+    if name == "CIFAR10":
+        return cifar10_dataloaders
+    elif name == "SVHN":
+        return svhn_dataloaders
+    else:
+        raise NotImplementedError(f"Data loaders for {name} not implemented!")
+
+
+
+
+def cifar10_dataloaders(
+    batch_size=128,
+    data_dir="data/datasets/cifar10",
+    num_workers=0,
+    class_to_replace: int = None,
+    percent_to_replace=None,
+    seed: int = 1,
+    only_mark: bool = False,
+    val = True
+):
+    
+    # --- set transforms for both train and test splits --- #
+    train_transform = transforms.Compose(
+        [
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ColorJitter(brightness=0.05, contrast=0.1, saturation=0.1),
+            transforms.RandomRotation(degrees = 10),
+            transforms.ToTensor(),
+            transforms.Normalize(mean = [0.4914, 0.4822, 0.4465],std = [0.2023, 0.1994, 0.2010]), 
+        ]
+    )
+
+    test_transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize(mean = [0.4914, 0.4822, 0.4465], std = [0.2023, 0.1994, 0.2010]), 
+        ]
+    )
+
+    # --- load the dataset --- #
+    train_set = CIFAR10(data_dir, train=True, transform=train_transform, download=True)
+    test_set = CIFAR10(data_dir, train=False, transform=test_transform, download=True)
+    
+    # --- make loaders --- #
+    train_loader, val_loader, test_loader = generic_dataloaders(train_set, test_set, batch_size, num_workers, class_to_replace, percent_to_replace, seed, only_mark, val)
+
+    # --- print what we did --- #
+    print("="*10 + " DATALOADER INFO")
+    print("Dataset: CIFAR-10")
+    print(f"Train: {len(train_set)} images for training")
+    if val:
+        print(f"Val: {len(val_loader.dataset)} images for validation")
+    print(f"Test: {len(test_set)} images for testing")
+    if class_to_replace is not None:
+        print(f"Replaced class {class_to_replace} in train")
+    if percent_to_replace is not None:
+        print(f"Replaced {percent_to_replace:.1f}% of labels across all classes in train")
+    print("Training augmentation = randomcrop(32,4) + randomhorizontalflip + colorjitter + randomrotation + normalize")
+    print("Validation/Test augmentation = normalize")
+    print("\n")
+
+    return train_loader, val_loader, test_loader
+
+
+
+
+# def svhn_dataloaders(
+#     batch_size=128,
+#     data_dir="datasets/svhn",
+#     num_workers=2,
+#     class_to_replace: int = None,
+#     num_indexes_to_replace=None,
+#     indexes_to_replace=None,
+#     seed: int = 1,
+#     only_mark: bool = False,
+#     shuffle=True,
+#     no_aug=False,
+# ):
+#     train_transform = transforms.Compose(
+#         [
+#             transforms.ToTensor(),
+#         ]
+#     )
+
+#     test_transform = transforms.Compose(
+#         [
+#             transforms.ToTensor(),
+#         ]
+#     )
+
+#     print(
+#         "Dataset information: SVHN\t 45000 images for training \t 5000 images for validation\t"
+#     )
+
+#     train_set = SVHN(data_dir, split="train", transform=train_transform, download=True)
+
+#     test_set = SVHN(data_dir, split="test", transform=test_transform, download=True)
+
+#     train_set.labels = np.array(train_set.labels)
+#     test_set.labels = np.array(test_set.labels)
+
+#     rng = np.random.RandomState(seed)
+#     valid_set = copy.deepcopy(train_set)
+#     valid_idx = []
+#     for i in range(max(train_set.labels) + 1):
+#         class_idx = np.where(train_set.labels == i)[0]
+#         valid_idx.append(
+#             rng.choice(class_idx, int(0.1 * len(class_idx)), replace=False)
+#         )
+#     valid_idx = np.hstack(valid_idx)
+#     train_set_copy = copy.deepcopy(train_set)
+
+#     valid_set.data = train_set_copy.data[valid_idx]
+#     valid_set.labels = train_set_copy.labels[valid_idx]
+
+#     train_idx = list(set(range(len(train_set))) - set(valid_idx))
+
+#     train_set.data = train_set_copy.data[train_idx]
+#     train_set.labels = train_set_copy.labels[train_idx]
+
+#     if class_to_replace is not None and indexes_to_replace is not None:
+#         raise ValueError(
+#             "Only one of `class_to_replace` and `indexes_to_replace` can be specified"
+#         )
+#     if class_to_replace is not None:
+#         replace_class(
+#             train_set,
+#             class_to_replace,
+#             num_indexes_to_replace=num_indexes_to_replace,
+#             seed=seed - 1,
+#             only_mark=only_mark,
+#         )
+#         if num_indexes_to_replace is None or num_indexes_to_replace == 4454:
+#             test_set.data = test_set.data[test_set.labels != class_to_replace]
+#             test_set.labels = test_set.labels[test_set.labels != class_to_replace]
+
+#     if indexes_to_replace is not None:
+#         replace_indexes(
+#             dataset=train_set,
+#             indexes=indexes_to_replace,
+#             seed=seed - 1,
+#             only_mark=only_mark,
+#         )
+
+#     loader_args = {"num_workers": 0, "pin_memory": False}
+
+#     def _init_fn(worker_id):
+#         np.random.seed(int(seed))
+
+#     train_loader = DataLoader(
+#         train_set,
+#         batch_size=batch_size,
+#         shuffle=True,
+#         worker_init_fn=_init_fn if seed is not None else None,
+#         **loader_args,
+#     )
+#     val_loader = DataLoader(
+#         valid_set,
+#         batch_size=batch_size,
+#         shuffle=False,
+#         worker_init_fn=_init_fn if seed is not None else None,
+#         **loader_args,
+#     )
+#     test_loader = DataLoader(
+#         test_set,
+#         batch_size=batch_size,
+#         shuffle=False,
+#         worker_init_fn=_init_fn if seed is not None else None,
+#         **loader_args,
+#     )
+
+#     return train_loader, val_loader, test_loader
+
+
+
+
+def svhn_dataloaders(
+    batch_size=128,
+    data_dir="data/datasets/svhn",
+    num_workers=2,
+    class_to_replace: int = None,
+    percent_to_replace=None,
+    seed: int = 1,
+    only_mark: bool = False,
+    val = True
+):
+    # set transforms
+    train_transform = transforms.Compose([transforms.ToTensor(),])
+
+    test_transform = transforms.Compose([transforms.ToTensor(),])
+
+    # load datasets
+    train_set = SVHN(data_dir, split="train", transform=train_transform, download=True)
+    test_set = SVHN(data_dir, split="test", transform=test_transform, download=True)
+
+    # get data loaders
+    train_loader, val_loader, test_loader = generic_dataloaders(train_set, test_set, batch_size, num_workers, class_to_replace, percent_to_replace, seed, only_mark, val)
+
+    # print what we did
+    # print("Dataset information: SVHN\t 45000 images for training \t 5000 images for validation\t")
+    print("="*10 + " DATALOADER INFO")
+    print("Dataset: SVHN")
+    print(f"Train: {len(train_set)} images for training")
+    if val:
+        print(f"Val: {len(val_loader.dataset)} images for validation")
+    print(f"Test: {len(test_set)} images for testing")
+    if class_to_replace is not None:
+        print(f"Replaced class {class_to_replace} in train")
+    if percent_to_replace is not None:
+        print(f"Replaced {percent_to_replace:.1f}% of labels across all classes in train")
+    print("Training augmentation = None")
+    print("Validation/Test augmentation = None")
+    print("\n")
+
+    return train_loader, val_loader, test_loader
+
+
+def load_dataloaders_for_experiment(
+    name,
+    batch_size=128,
+    num_workers=2,
+    class_to_replace: int = None,
+    percent_to_replace=None,
+    seed: int = 1,
+    only_mark: bool = False,
+    val = True
+    ):
+
+    dataloader_func = get_dataloader_method(name)
+
+    train_loader, val_loader, test_loader = dataloader_func(
+        batch_size=batch_size,
+        num_workers=num_workers,
+        class_to_replace = class_to_replace,
+        percent_to_replace=percent_to_replace,
+        seed = seed,
+        only_mark = only_mark,
+        val = val
+    )
+
+    return train_loader, val_loader, test_loader
+
+
+
+
+
 if __name__ == "__main__":
-    train_loader, val_loader, test_loader = cifar10_dataloaders()
+    train_loader, val_loader, test_loader = load_dataloaders_for_experiment(name = "CIFAR10")
     for i, (img, label) in enumerate(train_loader):
         print(torch.unique(label).shape)
+
 

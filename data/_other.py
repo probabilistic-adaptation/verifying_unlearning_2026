@@ -1,4 +1,11 @@
 
+import os
+from torchvision import transforms
+from torchvision.datasets import CIFAR10, CIFAR100
+import numpy as np
+import copy
+from tqdm import tqdm
+
 # def cifar10_dataloaders_no_val(
 #     batch_size=128, data_dir="datasets/cifar10", num_workers=2
 # ):
@@ -52,114 +59,6 @@
 
 
 
-
-
-def svhn_dataloaders(
-    batch_size=128,
-    data_dir="datasets/svhn",
-    num_workers=2,
-    class_to_replace: int = None,
-    num_indexes_to_replace=None,
-    indexes_to_replace=None,
-    seed: int = 1,
-    only_mark: bool = False,
-    shuffle=True,
-    no_aug=False,
-):
-    train_transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-        ]
-    )
-
-    test_transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-        ]
-    )
-
-    print(
-        "Dataset information: SVHN\t 45000 images for training \t 5000 images for validation\t"
-    )
-
-    train_set = SVHN(data_dir, split="train", transform=train_transform, download=True)
-
-    test_set = SVHN(data_dir, split="test", transform=test_transform, download=True)
-
-    train_set.labels = np.array(train_set.labels)
-    test_set.labels = np.array(test_set.labels)
-
-    rng = np.random.RandomState(seed)
-    valid_set = copy.deepcopy(train_set)
-    valid_idx = []
-    for i in range(max(train_set.labels) + 1):
-        class_idx = np.where(train_set.labels == i)[0]
-        valid_idx.append(
-            rng.choice(class_idx, int(0.1 * len(class_idx)), replace=False)
-        )
-    valid_idx = np.hstack(valid_idx)
-    train_set_copy = copy.deepcopy(train_set)
-
-    valid_set.data = train_set_copy.data[valid_idx]
-    valid_set.labels = train_set_copy.labels[valid_idx]
-
-    train_idx = list(set(range(len(train_set))) - set(valid_idx))
-
-    train_set.data = train_set_copy.data[train_idx]
-    train_set.labels = train_set_copy.labels[train_idx]
-
-    if class_to_replace is not None and indexes_to_replace is not None:
-        raise ValueError(
-            "Only one of `class_to_replace` and `indexes_to_replace` can be specified"
-        )
-    if class_to_replace is not None:
-        replace_class(
-            train_set,
-            class_to_replace,
-            num_indexes_to_replace=num_indexes_to_replace,
-            seed=seed - 1,
-            only_mark=only_mark,
-        )
-        if num_indexes_to_replace is None or num_indexes_to_replace == 4454:
-            test_set.data = test_set.data[test_set.labels != class_to_replace]
-            test_set.labels = test_set.labels[test_set.labels != class_to_replace]
-
-    if indexes_to_replace is not None:
-        replace_indexes(
-            dataset=train_set,
-            indexes=indexes_to_replace,
-            seed=seed - 1,
-            only_mark=only_mark,
-        )
-
-    loader_args = {"num_workers": 0, "pin_memory": False}
-
-    def _init_fn(worker_id):
-        np.random.seed(int(seed))
-
-    train_loader = DataLoader(
-        train_set,
-        batch_size=batch_size,
-        shuffle=True,
-        worker_init_fn=_init_fn if seed is not None else None,
-        **loader_args,
-    )
-    val_loader = DataLoader(
-        valid_set,
-        batch_size=batch_size,
-        shuffle=False,
-        worker_init_fn=_init_fn if seed is not None else None,
-        **loader_args,
-    )
-    test_loader = DataLoader(
-        test_set,
-        batch_size=batch_size,
-        shuffle=False,
-        worker_init_fn=_init_fn if seed is not None else None,
-        **loader_args,
-    )
-
-    return train_loader, val_loader, test_loader
 
 
 def cifar100_dataloaders(

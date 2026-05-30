@@ -30,7 +30,7 @@ def FT_iter(
     top1_meter = AverageMeter()
 
     # switch to train mode
-    model.train()
+    # model.train()
 
     start = time.time()
     for i, (image, target) in enumerate(retain_loader):
