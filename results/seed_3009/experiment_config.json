@@ -1,5 +1,5 @@
 {
-    "description": "Testing base training and unlearning on SVHN",
+    "description": "Testing if batch norm statistics fail back on SVHN",
     "device": "mps",
     "model_class": "ResNet",
     "num_runs": 1,
@@ -12,7 +12,7 @@
         "num_workers": 0
     },
     "training": {
-        "num_epochs": 5,
+        "num_epochs": 1,
         "learning_rate": 0.001,
         "weight_decay": 0.0001,
         "batch_print_freq": 5
@@ -33,7 +33,7 @@
         "percents_to_unlearn": null,
         "learning_rate": {
             "GA": 5e-05,
-            "FT": 0.001
+            "FT": 0.0001
         },
         "batch_print_freq": {
             "GA": 1,

@@ -19,7 +19,7 @@ def GA(train_loader, model, criterion, optimizer, epoch, args):
     top1 = utils.AverageMeter()
 
     # switch to train mode
-    model.train()
+    # model.train()
 
     start = time.time()
     for i, (image, target) in enumerate(train_loader):

@@ -44,11 +44,14 @@ def split_forget_retain(marked_loader, batch_size, shuffle = True):
     This by default "unmarks" the froget set by by undoing the negation applied to targets that originally "marked" them
     """
     
-    # make forget set 
+    # make forget set
     forget_dataset = copy.deepcopy(marked_loader.dataset)
     marked = forget_dataset.targets < 0
     forget_dataset.data = forget_dataset.data[marked]
     forget_dataset.targets = -forget_dataset.targets[marked] - 1
+    # sync .labels for datasets like SVHN whose __getitem__ reads .labels not .targets
+    if hasattr(forget_dataset, 'labels'):
+        forget_dataset.labels = forget_dataset.targets
     forget_loader = get_loader_from_dataset(forget_dataset, batch_size=batch_size, shuffle=shuffle)
 
     # make retain set
@@ -56,6 +59,8 @@ def split_forget_retain(marked_loader, batch_size, shuffle = True):
     marked = retain_dataset.targets >= 0
     retain_dataset.data = retain_dataset.data[marked]
     retain_dataset.targets = retain_dataset.targets[marked]
+    if hasattr(retain_dataset, 'labels'):
+        retain_dataset.labels = retain_dataset.targets
     retain_loader = get_loader_from_dataset(retain_dataset, batch_size=batch_size, shuffle=shuffle)
 
     print("Forget set:", len(forget_dataset), "items")
@@ -84,9 +89,13 @@ def split_random(dataloader, p, seed, batch_size, shuffle = True):
 
     set_one.data = base_dataset.data[set_one_idx]
     set_one.targets = base_dataset.targets[set_one_idx]
+    if hasattr(set_one, 'labels'):
+        set_one.labels = set_one.targets
 
     set_two.data = base_dataset.data[set_two_idx]
     set_two.targets = base_dataset.targets[set_two_idx]
+    if hasattr(set_two, 'labels'):
+        set_two.labels = set_two.targets
 
     dataloader_one = get_loader_from_dataset(set_one, batch_size = batch_size, shuffle=shuffle)
     dataloader_two = get_loader_from_dataset(set_two, batch_size = batch_size, shuffle=shuffle)

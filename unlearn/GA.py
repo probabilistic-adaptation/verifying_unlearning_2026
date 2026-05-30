@@ -24,8 +24,10 @@ def GA(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_an
     losses = AverageMeter()
     top1 = AverageMeter()
 
+    print(f"[GA] model.training = {model.training}")
+
     forget_loader = dataloaders["forget"]
-    
+
     start = time.time()
     
     for i, (image, target) in enumerate(forget_loader):

@@ -19,7 +19,8 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True):
     # switch to evaluate mode
     model.eval()
     # device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
-   
+    print(f"[validate] model.training = {model.training}")
+
     for i, (image, target) in enumerate(val_loader):
         image = image.to(device)
         target = target.to(device)

@@ -31,6 +31,7 @@ def FT_iter(
 
     # switch to train mode
     # model.train()
+    print(f"[FT_iter] model.training = {model.training}")
 
     start = time.time()
     for i, (image, target) in enumerate(retain_loader):

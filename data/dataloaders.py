@@ -316,6 +316,11 @@ def unmark_dataset(dataset):
 
 
 
+def get_targets(dataset):
+        for attr in ("targets", "labels", "_labels"):
+            if hasattr(dataset, attr):
+                return np.array(getattr(dataset, attr))
+        raise AttributeError(f"No targets attribute found on {type(dataset).__name__}")
 
 def generic_dataloaders(
     train_set, 
@@ -330,19 +335,13 @@ def generic_dataloaders(
 
 
     # access labels/targets, and just call them "targets", ...
-    try:
-        train_set.targets = np.array(train_set.targets)
-        test_set.targets = np.array(test_set.targets)
-        
-    # ... even if they're originally called "labels" , 
-    except:
-        train_set.targets = np.array(train_set.labels)
-        test_set.targets = np.array(test_set.labels)
-    
-    # ... or "_labels" .
-    else:
-        train_set.targets = np.array(train_set._labels)
-        test_set.targets = np.array(test_set._labels)
+    train_set.targets = get_targets(train_set)
+    test_set.targets = get_targets(test_set)
+    # sync .labels for datasets like SVHN whose __getitem__ reads .labels not .targets
+    if hasattr(train_set, 'labels'):
+        train_set.labels = train_set.targets
+    if hasattr(test_set, 'labels'):
+        test_set.labels = test_set.targets
 
     # IF WE NEED A VALIDATION SET, SPLIT IT OFF FROM THE TRAINING SET (10% of each class)
     # and then reconfigure train set to accommodate
@@ -360,11 +359,15 @@ def generic_dataloaders(
 
         valid_set.data = train_set_copy.data[valid_idx]
         valid_set.targets = train_set_copy.targets[valid_idx]
+        if hasattr(valid_set, 'labels'):
+            valid_set.labels = valid_set.targets
 
         train_idx = list(set(range(len(train_set))) - set(valid_idx))
 
         train_set.data = train_set_copy.data[train_idx]
         train_set.targets = train_set_copy.targets[train_idx]
+        if hasattr(train_set, 'labels'):
+            train_set.labels = train_set.targets
 
         # --- replace some data if specified --- #
 

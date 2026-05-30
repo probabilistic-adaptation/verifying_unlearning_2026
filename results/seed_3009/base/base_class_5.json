@@ -1,32 +1,32 @@
 {
-    "forget_loss": 8.465376587047095,
-    "forget_acc": 9.575704745725295,
-    "forget_entr": -97.34117367696498,
-    "forget_m_entr": -251366.53319347574,
-    "retain_loss": 8.520570291494021,
-    "retain_acc": 11.581167606418415,
-    "retain_entr": -106.68070004565567,
-    "retain_m_entr": -262348.7048314501,
-    "test_loss": 0.1833911763610617,
-    "test_acc": 95.09065766618819,
-    "test_entr": -102.48359301754061,
-    "test_m_entr": -255518.32819222496,
+    "forget_loss": 7.925640526499661,
+    "forget_acc": 9.546643416502558,
+    "forget_entr": -99.93567852362821,
+    "forget_m_entr": -262212.29095829703,
+    "retain_loss": 8.582552317933624,
+    "retain_acc": 11.585687381406737,
+    "retain_entr": -100.12667568745586,
+    "retain_m_entr": -259290.51053954804,
+    "test_loss": 0.18034799432710555,
+    "test_acc": 95.0829747486642,
+    "test_entr": -98.2956734008414,
+    "test_m_entr": -255427.52210740626,
     "MIA": {
         "correctness": {
-            "retain_test_member": 0.11746534056660639,
-            "forget_non_member": 0.9042429526300494
+            "retain_test_member": 0.11723930078360457,
+            "forget_non_member": 0.9045335658238884
         },
         "confidence": {
-            "retain_test_member": 0.11573236889692586,
-            "forget_non_member": 0.8841906422551584
+            "retain_test_member": 0.0002260397830018083,
+            "forget_non_member": 1.0
         },
         "entropy": {
-            "retain_test_member": 0.622588908981314,
-            "forget_non_member": 0.4160127869805289
+            "retain_test_member": 0.6088758288125377,
+            "forget_non_member": 0.530223772159256
         },
         "m_entropy": {
-            "retain_test_member": 0.11565702230259192,
-            "forget_non_member": 0.8841906422551584
+            "retain_test_member": 0.0002260397830018083,
+            "forget_non_member": 1.0
         }
     },
     "type": "base"
