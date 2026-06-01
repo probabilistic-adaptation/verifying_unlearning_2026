@@ -7,6 +7,7 @@ import wandb
 import time
 from evaluation.entropy import entropy, m_entropy
 from evaluation.accuracy import accuracy
+import torch.nn.functional as F
 
 
 class AverageMeter(object):
@@ -57,6 +58,8 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq, device, 
         loss.backward()
         optimizer.step()
 
+        
+        prob_dist = F.softmax(output_clean, dim=-1)
         output = output_clean.float()
         loss = loss.float()
         
@@ -66,8 +69,8 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq, device, 
         # update trackers
         losses_meter.update(loss.item(), image.size(0))
         top1_meter.update(prec1.item(), image.size(0))
-        entropy_meter.update( torch.mean(entropy(output)).item(), image.size(0) )
-        m_entropy_meter.update( torch.mean(m_entropy(output, target)).item(), image.size(0) )
+        entropy_meter.update( torch.mean(entropy(prob_dist)).item(), image.size(0) )
+        m_entropy_meter.update( torch.mean(m_entropy(prob_dist, target)).item(), image.size(0) )
 
         if (i + 1) % print_freq == 0:
             end = time.time()

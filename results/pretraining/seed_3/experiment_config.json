@@ -1,0 +1,25 @@
+{
+    "description": "Pre-training ResNet on SVHN",
+    "device": "mps",
+    "model_class": "ResNet",
+    "data": {
+        "dataset": "SVHN",
+        "batch_size": 1024,
+        "num_workers": 0
+    },
+    "training": {
+        "num_epochs": [
+            1,
+            5,
+            10,
+            15,
+            20,
+            30
+        ],
+        "num_runs": 3,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_print_freq": 5
+    },
+    "GRAND_SEED": 3
+}

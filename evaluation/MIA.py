@@ -204,37 +204,37 @@ class black_box_benchmarks(object):
         return ret
 
 
-def output_dists_and_labels(data_loader, model, device):
-    probs = []
-    labels = []
-    model.eval()
+# def output_dists_and_labels(data_loader, model, device):
+#     probs = []
+#     labels = []
+#     model.eval()
 
-    for data, target in data_loader:
-        data = data.to(device)
-        target = target.to(device)
-        with torch.no_grad():
-            output = model(data)
-            prob = F.softmax(output, dim=-1)
+#     for data, target in data_loader:
+#         data = data.to(device)
+#         target = target.to(device)
+#         with torch.no_grad():
+#             output = model(data)
+#             prob = F.softmax(output, dim=-1)
 
-        probs.append(prob)
-        labels.append(target)
+#         probs.append(prob)
+#         labels.append(target)
 
-    return torch.cat(probs).cpu().numpy(), torch.cat(labels).cpu().numpy()
+#     return torch.cat(probs).cpu().numpy(), torch.cat(labels).cpu().numpy()
 
 
 def MIA(
-    retain_loader_train, test_loader, retain_loader_test, forget_loader, model, device
+    shadow_train_inputs, shadow_test_inputs, target_train_inputs, target_test_inputs, model, device
 ):
-    shadow_train_performance = output_dists_and_labels(retain_loader_train, model, device)
-    shadow_test_performance = output_dists_and_labels(test_loader, model, device)
-    target_train_performance = output_dists_and_labels(retain_loader_test, model, device)
-    target_test_performance = output_dists_and_labels(forget_loader, model, device)
+    # shadow_train_performance = output_dists_and_labels(shadow_train, model, device)
+    # shadow_test_performance = output_dists_and_labels(shadow_test, model, device)
+    # target_train_performance = output_dists_and_labels(target_train, model, device)
+    # target_test_performance = output_dists_and_labels(target_test, model, device)
 
     BBB = black_box_benchmarks(
-        shadow_train_performance,
-        shadow_test_performance,
-        target_train_performance,
-        target_test_performance,
+        shadow_train_inputs,
+        shadow_test_inputs,
+        target_train_inputs,
+        target_test_inputs,
         num_classes=10,
     )
     return BBB._mem_inf_benchmarks()
