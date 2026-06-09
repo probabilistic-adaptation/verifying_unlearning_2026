@@ -1,0 +1,52 @@
+{
+    "forget_loss": 3.971411795043945,
+    "forget_acc": 0.25999999980926514,
+    "forget_entr": 2.4833138355255127,
+    "forget_m_entr": 4.548918007659912,
+    "retain_loss": 0.14649599958790674,
+    "retain_acc": 95.63333330213759,
+    "retain_entr": 0.25286802570554945,
+    "retain_m_entr": 0.1348625057498614,
+    "test_loss": 0.6941946267127991,
+    "test_acc": 81.91999995117187,
+    "test_entr": 0.569378225326538,
+    "test_m_entr": 0.7985454325675965,
+    "MIA": {
+        "correctness": {
+            "retain_test_member": 0.9562222222222222,
+            "forget_non_member": 0.9974
+        },
+        "confidence_class": {
+            "retain_test_member": 0.9312222222222222,
+            "forget_non_member": 0.0
+        },
+        "confidence_no_class": {
+            "retain_test_member": 0.9335555555555556,
+            "forget_non_member": 1.0
+        },
+        "entropy_class": {
+            "retain_test_member": 0.8856666666666667,
+            "forget_non_member": 0.0
+        },
+        "entropy_no_class": {
+            "retain_test_member": 0.9078888888888889,
+            "forget_non_member": 0.9448
+        },
+        "m_entropy_class": {
+            "retain_test_member": 0.9248888888888889,
+            "forget_non_member": 0.0
+        },
+        "m_entropy_no_class": {
+            "retain_test_member": 0.9283333333333333,
+            "forget_non_member": 1.0
+        }
+    },
+    "type": "unlearn",
+    "epoch": 5,
+    "run": 3,
+    "forget_set_type": "class",
+    "unlearning_item": 5,
+    "method": "bad_teacher",
+    "epoch_duration": 81.75360202789307,
+    "total_unlearning_time_up_to_now": 410263.89026641846
+}

@@ -1,0 +1,47 @@
+{
+    "description": "Testing Bad Teacher on CIFAR10 with higher num_workers",
+    "device": "mps",
+    "model_class": "ResNet",
+    "num_runs": 3,
+    "retrain_from_scratch": false,
+    "train_base": false,
+    "measure_base_results": false,
+    "data": {
+        "dataset": "CIFAR10",
+        "batch_size": 512,
+        "num_workers": 4
+    },
+    "training": {
+        "num_epochs": 1,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_print_freq": 5
+    },
+    "unlearning": {
+        "methods": [
+            "bad_teacher"
+        ],
+        "num_epochs": 5,
+        "measure_every": 1,
+        "save_checkpoints_at": [
+            5
+        ],
+        "classes_to_unlearn": [
+            5
+        ],
+        "percents_to_unlearn": null,
+        "learning_rate": {
+            "GA": 5e-05,
+            "FT": 0.0001,
+            "boundary_shrink": 1e-05,
+            "bad_teacher": 5e-05
+        },
+        "batch_print_freq": {
+            "GA": 1,
+            "FT": 8,
+            "boundary_shrink": 1,
+            "bad_teacher": 3
+        }
+    },
+    "GRAND_SEED": 3014
+}

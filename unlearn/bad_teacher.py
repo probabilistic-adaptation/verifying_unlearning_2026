@@ -1,4 +1,5 @@
 import torch
+import time
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 # from dataset import UnLearningData
@@ -84,6 +85,7 @@ def bad_teacher_iter(unlearning_loader, model, unlearning_teacher, full_trained_
     losses_meter = AverageMeter()
     forget_agree_meter = AverageMeter()   # student vs. unlearn teacher on forget samples
     retain_agree_meter = AverageMeter()   # student vs. full teacher on retain samples
+    start = time.time()
 
     for i, batch in enumerate(unlearning_loader):
         x, y = batch
@@ -118,11 +120,13 @@ def bad_teacher_iter(unlearning_loader, model, unlearning_teacher, full_trained_
         losses_meter.update(loss.float().item(), x.size(0))
 
         if (i + 1) % print_freq == 0:
+            end = time.time()
             print(
                 f"Epoch: [{epoch}][{i}/{len(unlearning_loader)}]\t"
                 f"Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f})\t"
                 f"Forget→UnlearnT {forget_agree_meter.val:.3f} ({forget_agree_meter.avg:.3f})\t"
                 f"Retain→FullT {retain_agree_meter.val:.3f} ({retain_agree_meter.avg:.3f})\t"
+                f"Time {end - start:.2f}"
             )
             if w_and_b:
                 wandb.log({
@@ -130,6 +134,7 @@ def bad_teacher_iter(unlearning_loader, model, unlearning_teacher, full_trained_
                     "forget_teacher_agreement": forget_agree_meter.val,
                     "retain_teacher_agreement": retain_agree_meter.val,
                 })
+            start = time.time()
 
     return model, losses_meter.avg
 
@@ -213,5 +218,4 @@ class BadTeacherUnLearningData(Dataset):
             return x,y
 
 def bad_teacher(unlearning_loader, model, unlearning_teacher, full_trained_teacher, optimizer, epoch, print_freq, device, w_and_b = True, KL_temperature = 1):
-
     return bad_teacher_iter(unlearning_loader, model, unlearning_teacher, full_trained_teacher, optimizer, epoch, print_freq, device, w_and_b, KL_temperature)

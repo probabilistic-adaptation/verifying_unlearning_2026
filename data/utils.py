@@ -30,13 +30,13 @@ def setup_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 
-def get_loader_from_dataset(dataset, batch_size, shuffle=True):
+def get_loader_from_dataset(dataset, batch_size, shuffle=True, num_workers=0):
     return torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, num_workers=0, pin_memory=True, shuffle=shuffle
+        dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=True, shuffle=shuffle
     )
 
 
-def split_forget_retain(marked_loader, batch_size, shuffle = True):
+def split_forget_retain(marked_loader, batch_size, shuffle = True, num_workers=0):
     """Splits the marked dataset into two dataloaders: one for the forget set and one for the retain set
     
     `marked_loader` for a training set should set shuffle = True, otherwise False
@@ -52,7 +52,7 @@ def split_forget_retain(marked_loader, batch_size, shuffle = True):
     # sync .labels for datasets like SVHN whose __getitem__ reads .labels not .targets
     if hasattr(forget_dataset, 'labels'):
         forget_dataset.labels = forget_dataset.targets
-    forget_loader = get_loader_from_dataset(forget_dataset, batch_size=batch_size, shuffle=shuffle)
+    forget_loader = get_loader_from_dataset(forget_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
     # make retain set
     retain_dataset = copy.deepcopy(marked_loader.dataset)
@@ -61,7 +61,7 @@ def split_forget_retain(marked_loader, batch_size, shuffle = True):
     retain_dataset.targets = retain_dataset.targets[marked]
     if hasattr(retain_dataset, 'labels'):
         retain_dataset.labels = retain_dataset.targets
-    retain_loader = get_loader_from_dataset(retain_dataset, batch_size=batch_size, shuffle=shuffle)
+    retain_loader = get_loader_from_dataset(retain_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
     print("Forget set:", len(forget_dataset), "items")
     print("Retain set:", len(retain_dataset), "items")
@@ -70,7 +70,7 @@ def split_forget_retain(marked_loader, batch_size, shuffle = True):
 
 
 
-def split_random(dataloader, p, seed, batch_size, shuffle = True):
+def split_random(dataloader, p, seed, batch_size, shuffle = True, num_workers=0):
 
     base_dataset = dataloader.dataset
 
@@ -97,8 +97,8 @@ def split_random(dataloader, p, seed, batch_size, shuffle = True):
     if hasattr(set_two, 'labels'):
         set_two.labels = set_two.targets
 
-    dataloader_one = get_loader_from_dataset(set_one, batch_size = batch_size, shuffle=shuffle)
-    dataloader_two = get_loader_from_dataset(set_two, batch_size = batch_size, shuffle=shuffle)
+    dataloader_one = get_loader_from_dataset(set_one, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+    dataloader_two = get_loader_from_dataset(set_two, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
     print("Split one:", len(dataloader_one.dataset), "items")
     print("Split two:", len(dataloader_two.dataset), "items\n")

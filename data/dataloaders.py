@@ -396,25 +396,20 @@ def generic_dataloaders(
             replace_percent(valid_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
         replace_percent(test_set, percent_to_replace, seed=int(f"{seed}{percent_to_replace}"), only_mark=only_mark)
 
-    loader_args = {"num_workers": 0, "pin_memory": False}
-
-    def _init_fn(worker_id):
-        np.random.seed(int(seed))
+    loader_args = {"num_workers": num_workers, "pin_memory": torch.cuda.is_available()}
 
     train_loader = DataLoader(
         train_set,
         batch_size=batch_size,
         shuffle=True,
-        worker_init_fn=_init_fn if seed is not None else None,
         **loader_args,
     )
-    
+
     if val:
         val_loader = DataLoader(
             valid_set,
             batch_size=batch_size,
             shuffle=False,
-            worker_init_fn=_init_fn if seed is not None else None,
             **loader_args,
         )
     else:
@@ -424,7 +419,6 @@ def generic_dataloaders(
         test_set,
         batch_size=batch_size,
         shuffle=False,
-        worker_init_fn=_init_fn if seed is not None else None,
         **loader_args,
     )
 
@@ -493,6 +487,7 @@ def cifar10_dataloaders(
         print(f"Replaced {percent_to_replace:.1f}% of labels across all classes in train")
     print("Training augmentation = randomcrop(32,4) + randomhorizontalflip + colorjitter + randomrotation + normalize")
     print("Validation/Test augmentation = normalize")
+    print(f"num_workers = {num_workers}")
     print("\n")
 
     return train_loader, val_loader, test_loader
@@ -646,6 +641,7 @@ def svhn_dataloaders(
         print(f"Replaced {percent_to_replace:.1f}% of labels across all classes in train")
     print("Training augmentation = None")
     print("Validation/Test augmentation = None")
+    print(f"num_workers = {num_workers}")
     print("\n")
 
     return train_loader, val_loader, test_loader
