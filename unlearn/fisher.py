@@ -5,7 +5,10 @@ from torch.autograd import grad
 from tqdm import tqdm
 
 
-def fisher_information_martix(model, train_dl, device):
+def fisher_information_matrix(model, train_dl, device):
+    """
+    Calculate the fisher information matrix for the given model and training data loader.
+    """
     model.eval()
     fisher_approximation = []
     for parameter in model.parameters():
@@ -34,20 +37,31 @@ def fisher_information_martix(model, train_dl, device):
 
 
 def fisher(data_loaders, model, criterion, args):
+    """
+    Add Fisher noise to a model's parameters
+    Based on retain
+    """
     retain_loader = data_loaders["retain"]
 
     device = f"cuda:{int(args.gpu)}" if torch.cuda.is_available() else "cpu"
-    fisher_approximation = fisher_information_martix(model, retain_loader, device)
+    fisher_approximation = fisher_information_matrix(model, retain_loader, device)
     for i, parameter in enumerate(model.parameters()):
         noise = torch.sqrt(args.alpha / fisher_approximation[i]).clamp(
             max=1e-3
         ) * torch.empty_like(parameter).normal_(0, 1)
-        noise = noise * 10 if parameter.shape[-1] == 10 else noise
+        
+        # this is a weird line
+        # supposedly, the last layer has 10 output units, and we want to add more noise to it
+        # but fails if any other layer also happens to have 10 output units
+        noise = noise * 10 if parameter.shape[-1] == 10 else noise 
         parameter.data = parameter.data + noise
     return model
 
 
 def hessian(dataset, model, loss_fn, args):
+    """
+    I think this calculates the magnitude of the second derivative of the loss for each param
+    """
     model.eval()
     device = f"cuda:{int(args.gpu)}" if torch.cuda.is_available() else "cpu"
     loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
@@ -76,6 +90,8 @@ def hessian(dataset, model, loss_fn, args):
 
 
 def get_mean_var(p, args, is_base_dist=False):
+    """
+    Get the mean and variance for a parameter based on its accumulated second derivative of the loss"""
     var = copy.deepcopy(1.0 / (p.grad2_acc + 1e-8))
     var = var.clamp(max=1e3)
     if p.shape[0] == args.num_classes:
@@ -94,6 +110,8 @@ def get_mean_var(p, args, is_base_dist=False):
     ):
         mu[args.class_to_replace] = 0
         var[args.class_to_replace] = 0.0001
+    
+    # why are we adding more noise arbitrarily like this?
     if p.shape[0] == args.num_classes:
         # Last layer
         var *= 10
@@ -104,6 +122,10 @@ def get_mean_var(p, args, is_base_dist=False):
 
 
 def fisher_new(data_loaders, model, criterion, args):
+    """
+    Add Fisher noise to a model's parameters using the FULL second derivative of the loss, instead of the fisher information matrix approximation
+    Based on retain
+    """
     retain_loader = data_loaders["retain"]
     dataset = retain_loader.dataset
     for p in model.parameters():

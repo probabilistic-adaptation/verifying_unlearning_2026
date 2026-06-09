@@ -1,0 +1,40 @@
+{
+    "forget_loss": 0.38587551865577696,
+    "forget_acc": 85.03999991455078,
+    "forget_entr": 0.34937272686958315,
+    "forget_m_entr": 0.45885138540267945,
+    "retain_loss": 0.09367891712586085,
+    "retain_acc": 96.93777779134115,
+    "retain_entr": 0.13222751887639364,
+    "retain_m_entr": 0.09397129441764619,
+    "test_loss": 0.31918402824401854,
+    "test_acc": 90.28000002441406,
+    "test_entr": 0.150574320268631,
+    "test_m_entr": 0.4563882992744446,
+    "MIA": {
+        "correctness": {
+            "retain_test_member": 0.9704444444444444,
+            "forget_non_member": 0.14959999999999996
+        },
+        "confidence": {
+            "retain_test_member": 0.9455555555555556,
+            "forget_non_member": 1.0
+        },
+        "entropy": {
+            "retain_test_member": 0.9098888888888889,
+            "forget_non_member": 1.0
+        },
+        "m_entropy": {
+            "retain_test_member": 0.9483333333333334,
+            "forget_non_member": 1.0
+        }
+    },
+    "type": "unlearn",
+    "epoch": 1,
+    "run": 1,
+    "forget_set_type": "class",
+    "unlearning_item": 5,
+    "method": "boundary_shrink",
+    "epoch_duration": 17.42758297920227,
+    "total_unlearning_time_up_to_now": 17427.58297920227
+}

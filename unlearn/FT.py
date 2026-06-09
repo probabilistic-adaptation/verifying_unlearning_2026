@@ -7,7 +7,6 @@ import torch
 # from .impl import iterative_unlearn
 from trainer.utils import AverageMeter
 from evaluation.accuracy import accuracy
-from evaluation.entropy import entropy, m_entropy
 import wandb
 
 sys.path.append(".")
@@ -31,9 +30,11 @@ def FT_iter(
 
     # switch to train mode
     # model.train()
-    print(f"[FT_iter] model.training = {model.training}")
+    # print(f"[FT_iter] model.training = {model.training}")
 
-    start = time.time()
+    # start = time.time()
+    # DO NOT NEED TO CLOCKING TIME INSIDE EACH FUNCTION - THAT IS HANDLED BY DO_UNLEARNING
+
     for i, (image, target) in enumerate(retain_loader):
         # if epoch < args.warmup:
         #     utils.warmup_lr(
@@ -67,7 +68,6 @@ def FT_iter(
                     param.grad *= mask[name]
 
         optimizer.step()
-
         output = output_clean.float()
         loss = loss.float()
         
@@ -79,12 +79,12 @@ def FT_iter(
         top1_meter.update(prec1.item(), image.size(0))
 
         if (i + 1) % print_freq == 0:
-            end = time.time()
+            # end = time.time()
             print(
                 f"Epoch: [{epoch}][{i}/{len(retain_loader)}]\t"
                 f"Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f})\t"
                 f"Accuracy {top1_meter.val:.3f} ({top1_meter.avg:.3f})\t"
-                f"Time {end - start:.2f}"
+                # f"Time {end - start:.2f}"
             )
 
             if w_and_b:
@@ -97,7 +97,7 @@ def FT_iter(
                     }
                 )
 
-            start = time.time()
+            # start = time.time()
 
     # print("train_accuracy {top1.avg:.3f}".format(top1=top1))
 

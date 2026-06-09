@@ -229,7 +229,7 @@ from .FT import FT, FT_l1
 
 # from .RL_pro import RL_proximal
 # from .boundary_ex import boundary_expanding
-# from .boundary_sh import boundary_shrink
+from .boundary_sh import boundary_shrink
 
 
 def raw():
@@ -270,8 +270,8 @@ def get_unlearn_method(name):
     #     return GA_l1
     # elif name == "boundary_expanding":
     #     return boundary_expanding
-    # elif name == "boundary_shrink":
-    #     return boundary_shrink
+    elif name == "boundary_shrink":
+        return boundary_shrink
     # elif name == "RL_proximal":
     #     return RL_proximal
     else:
@@ -333,9 +333,9 @@ def do_unlearning(
 
         # ... do one epoch of the unlearning method,
         print(f"---------- Epoch {k}\n")
-        print(f"[do_unlearning] before {method}: model.training = {model.training}")
+        # print(f"[do_unlearning] before {method}: model.training = {model.training}")
         model, top1_avg = method_func(dataloaders, model, criterion, opt, epoch = k, print_freq = print_freq, device = device, w_and_b = w_and_b)
-        print(f"[do_unlearning] after {method}: model.training = {model.training}")
+        # print(f"[do_unlearning] after {method}: model.training = {model.training}")
 
         # ... stop clock for this epoch
         epoch_duration = time.time() - start_time
@@ -349,9 +349,9 @@ def do_unlearning(
             epoch_results_folder = init_folder_if_not_exists( os.path.join(results_folder, f"epoch_{k}") )
 
             # ... run some evaluations, and add metadata
-            print(f"[do_unlearning] before measure_unlearning_metrics: model.training = {model.training}")
+            # print(f"[do_unlearning] before measure_unlearning_metrics: model.training = {model.training}")
             results = measure_unlearning_metrics(model = model, dataloaders = dataloaders, device = device)
-            print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
+            # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({
                 "type": "unlearn",
                 "epoch": k,

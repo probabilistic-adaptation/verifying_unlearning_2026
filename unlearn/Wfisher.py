@@ -5,6 +5,8 @@ from tqdm import tqdm
 import time
 
 def get_require_grad_params(model: torch.nn.Module, named=False):
+    """Get the parameters of a model that require gradients, optionally with their names"""
+
     if named:
         return [
             (name, param)
@@ -69,31 +71,31 @@ def woodfisher(model, train_dl, device, criterion, v, args, mask=None):
     return k_vec
 
 
-def woodfisher_im(model, train_dl, device, criterion, v, args, mask=None):
-    model.eval()
-    k_vec = torch.clone(v)
-    N = 300000
-    o_vec = None
-    device = (
-        torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
-    )
-    for idx, data in enumerate(tqdm(train_dl)):
-        model.zero_grad()
-        data, label = get_x_y_from_data_dict(data, device)
-        output = model(data)
+# def woodfisher_im(model, train_dl, device, criterion, v, args, mask=None):
+#     model.eval()
+#     k_vec = torch.clone(v)
+#     N = 300000
+#     o_vec = None
+#     device = (
+#         torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+#     )
+#     for idx, data in enumerate(tqdm(train_dl)):
+#         model.zero_grad()
+#         data, label = get_x_y_from_data_dict(data, device)
+#         output = model(data)
 
-        loss = criterion(output, label)
-        sample_grad = sam_grad(model, loss, args)
-        with torch.no_grad():
-            if o_vec is None:
-                o_vec = torch.clone(sample_grad)
-            else:
-                tmp = torch.dot(o_vec, sample_grad)
-                k_vec -= (torch.dot(k_vec, sample_grad) / (N + tmp)) * o_vec
-                o_vec -= (tmp / (N + tmp)) * o_vec
-        if idx > N:
-            return k_vec
-    return k_vec
+#         loss = criterion(output, label)
+#         sample_grad = sam_grad(model, loss, args)
+#         with torch.no_grad():
+#             if o_vec is None:
+#                 o_vec = torch.clone(sample_grad)
+#             else:
+#                 tmp = torch.dot(o_vec, sample_grad)
+#                 k_vec -= (torch.dot(k_vec, sample_grad) / (N + tmp)) * o_vec
+#                 o_vec -= (tmp / (N + tmp)) * o_vec
+#         if idx > N:
+#             return k_vec
+#     return k_vec
 
 
 def Wfisher(data_loaders, model, criterion, args, mask=None, **kwargs):

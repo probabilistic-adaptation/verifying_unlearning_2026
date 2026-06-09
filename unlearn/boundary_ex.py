@@ -11,6 +11,9 @@ def expand_model(model):
     last_fc_name = None
     last_fc_layer = None
 
+    # moves through every layer of the model, iteratively sets "last_layer" to that one
+    # trivially, the final one you get is indeed the last linear layer
+    # there must be a more efficient way of doing this - cant you just index the last layer directly with something like [-1]?
     for name, module in model.named_modules():
         if isinstance(module, nn.Linear):
             last_fc_name = name
@@ -61,7 +64,7 @@ def boundary_expanding_iter(
         target = target.cuda()
 
         target_label = torch.ones_like(target)
-        target_label *= args.num_classes
+        target_label *= args.num_classes # the target label is thus the "final" new class (assuming 0 indexing)
         # compute output
         output_clean = model(image)
         loss = criterion(output_clean, target_label)
@@ -102,5 +105,7 @@ def boundary_expanding_iter(
 
 
 def boundary_expanding(data_loaders, model, criterion, args, mask=None):
+    
+    # THIS NEEDS TO PRUNE THE MODEL AFTER TRAINING
     expand_model(model)
     return boundary_expanding_iter(data_loaders, model, criterion, args, mask)

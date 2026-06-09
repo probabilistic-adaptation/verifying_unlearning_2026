@@ -73,19 +73,21 @@ def measure_unlearning_metrics(model, dataloaders, device):
     
     results["MIA"] = attack_results
 
-    print("Performing SVC MIA attack...\n")
-    # `device` is inferred by whatever the device the model is on - dont explicitly pass it (might be smart to do this in other areas too, so you dont have to carry `device` around)
-    # need the (probs, labels) outputs for each data loader we care about - some have already been computed through other passes through forget and test
+    # # COMMENTING OUT SVC FOR NOW, TAKES TOO LONG
 
-    # we do not need to convert this output using ".numpy()", since the SVC operations are done using torch
-    attack_results = SVC_MIA(
-        shadow_train_inputs = (retain_one_probs, retain_one_labels), 
-        shadow_test_inputs = (test_probs, test_labels),
-        target_train_inputs = (retain_two_probs, retain_two_labels),
-        target_test_inputs = (forget_probs, forget_labels),
-        model = model
-        )
-    results["SVC_MIA"] = attack_results
+    # print("Performing SVC MIA attack...\n")
+    # # `device` is inferred by whatever the device the model is on - dont explicitly pass it (might be smart to do this in other areas too, so you dont have to carry `device` around)
+    # # need the (probs, labels) outputs for each data loader we care about - some have already been computed through other passes through forget and test
+
+    # # we do not need to convert this output using ".numpy()", since the SVC operations are done using torch
+    # attack_results = SVC_MIA(
+    #     shadow_train_inputs = (retain_one_probs, retain_one_labels), 
+    #     shadow_test_inputs = (test_probs, test_labels),
+    #     target_train_inputs = (retain_two_probs, retain_two_labels),
+    #     target_test_inputs = (forget_probs, forget_labels),
+    #     model = model
+    #     )
+    # results["SVC_MIA"] = attack_results
 
 
     return results
