@@ -9,7 +9,9 @@ import torch
 from evaluation.utils import measure_unlearning_metrics
 import wandb
 from trainer.utils import init_folder_if_not_exists
-
+from torch.utils.data import DataLoader
+from data.utils import split_random
+import copy
 
 
 # def plot_training_curve(training_result, save_dir, prefix):
@@ -230,6 +232,7 @@ from .FT import FT, FT_l1
 # from .RL_pro import RL_proximal
 # from .boundary_ex import boundary_expanding
 from .boundary_sh import boundary_shrink
+from .bad_teacher import bad_teacher, BadTeacherUnLearningData
 
 
 def raw():
@@ -272,6 +275,8 @@ def get_unlearn_method(name):
     #     return boundary_expanding
     elif name == "boundary_shrink":
         return boundary_shrink
+    elif name == "bad_teacher":
+        return bad_teacher
     # elif name == "RL_proximal":
     #     return RL_proximal
     else:
@@ -300,7 +305,9 @@ def do_unlearning(
         w_and_b,
         save_checkpoints_at,
         checkpoint_subfolder,
-        print_freq
+        print_freq,
+        blank_model,
+        seed
         ):
     """
     Router for executing unlearning
@@ -311,17 +318,48 @@ def do_unlearning(
     """
 
     method_func = get_unlearn_method(method)
-
     print(f"Executing unlearning with {method}...\n")
-    
+
+    # if we're doing any of the knowledge distillation methods, then there's some extra set up we need outside the epoch loop
+    if method in ["bad_teacher"]:
+        # need to make unlearning dataset
+        retain_loader = dataloaders["retain"]
+        retain_keep_loader, _ = split_random(dataloaders["retain"], p = .3, seed = seed, batch_size=retain_loader.batch_size, shuffle = False)
+        unlearning_data = BadTeacherUnLearningData(forget_data = dataloaders["forget"].dataset, retain_data = retain_keep_loader.dataset)
+        unlearning_loader = DataLoader(
+            unlearning_data, 
+            batch_size = retain_loader.batch_size, 
+            shuffle=True, 
+            num_workers=retain_loader.num_workers, 
+            pin_memory=True
+            )
+
+        # `model` here is the student model, which at this time is a copy of the base model, i.e. the full_trained teacher, so we can init the good teacher as such
+        full_trained_teacher = copy.deepcopy(model).to(device)
+        
+        # we need the unlearning teacher to be the same model architecture
+        # initialized in the same way as the full_trained_teacher, but not trained
+        # (we pass it as an argument for convenience)
+        unlearning_teacher = blank_model.to(device)
+
+        # teachers are in eval mode, student is in train
+        full_trained_teacher.eval()
+        unlearning_teacher.eval()
+        opt = torch.optim.Adam(model.parameters(), lr = unlearning_lr)
+
+    else:
+
+        # set up unlearning criterion and opt
+        # --- we by default presume SGD, but might want to make this more flexible later
+        criterion = nn.CrossEntropyLoss()
+        opt = torch.optim.SGD(model.parameters(), lr=unlearning_lr)
+
+        # we do NOT set model.train() otherwise - we would lose Batchnorm statistics that way
+
+
     # create save folder if it doesn't exist
     results_folder = init_folder_if_not_exists( f"{base_results_folder}/{method}" )
     
-    # set up unlearning criterion and opt
-    # --- we by default presume SGD, but might want to make this more flexible later
-    criterion = nn.CrossEntropyLoss()
-    opt = torch.optim.SGD(model.parameters(), lr=unlearning_lr)
-
     # init total unlearning time
     total_unlearning_time_ms = 0
 
@@ -333,9 +371,17 @@ def do_unlearning(
 
         # ... do one epoch of the unlearning method,
         print(f"---------- Epoch {k}\n")
-        # print(f"[do_unlearning] before {method}: model.training = {model.training}")
-        model, top1_avg = method_func(dataloaders, model, criterion, opt, epoch = k, print_freq = print_freq, device = device, w_and_b = w_and_b)
-        # print(f"[do_unlearning] after {method}: model.training = {model.training}")
+
+        # ... --- the args for bad teacher and other knowledge distillation methods are different
+        if method == "bad_teacher":
+            # we ONLY set to train on knowledge distillation unlearning
+            # MAYBE COME BACK TO THIS
+            model.train()
+            model, _ = method_func(unlearning_loader, model, unlearning_teacher, full_trained_teacher, opt, epoch = k, print_freq = print_freq, device = device, w_and_b = w_and_b)
+        else:
+            model.eval()
+            model, _ = method_func(dataloaders, model, criterion, opt, epoch = k, print_freq = print_freq, device = device, w_and_b = w_and_b)
+        
 
         # ... stop clock for this epoch
         epoch_duration = time.time() - start_time
@@ -344,6 +390,9 @@ def do_unlearning(
 
         # ... and if we're measuring results this epoch...,
         if k % measure_every == 0:
+
+            # make sure we're in eval mode, regardless of whether we are during unlearning
+            model.eval()
             
             # ... create an epoch-level subfolder if it doesn't exist
             epoch_results_folder = init_folder_if_not_exists( os.path.join(results_folder, f"epoch_{k}") )

@@ -15,6 +15,7 @@ def measure_unlearning_metrics(model, dataloaders, device):
     # fill in base information
     results = {}
     criterion= nn.CrossEntropyLoss()
+    model.eval() # just overwhelmingly confirm that we are in eval mode here, regardless of whether the model was passed in eval mode
     
     # add in metrics, as you'd like
 

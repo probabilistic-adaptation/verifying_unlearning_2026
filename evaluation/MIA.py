@@ -101,6 +101,13 @@ class black_box_benchmarks(object):
 
     # SUPPOSEDLY FASTER, EQUIVALENT VERSION OF THE ABOVE
     def _thre_setting(self, tr_values, te_values):
+        # If no member samples exist for this class (e.g. class-based unlearning where the
+        # forgotten class is absent from retain), we cannot calibrate a threshold. Return -inf
+        # so all samples of this class are treated as members (the conservative default).
+        # Should only kick in on class forgetting
+        if len(tr_values.flatten()) == 0 or len(te_values.flatten()) == 0:
+            return -np.inf
+
         # Create labels: 1 for train (members), 0 for test (non-members)
         y_true = np.concatenate([np.ones_like(tr_values), np.zeros_like(te_values)])
         y_scores = np.concatenate([tr_values, te_values])
@@ -113,7 +120,12 @@ class black_box_benchmarks(object):
         acc = 0.5 * (tpr + (1 - fpr))
         
         # Find the index of the maximum accuracy and return the corresponding threshold
-        max_idx = np.argmax(acc)
+        # max_idx = np.argmax(acc)
+        
+        # Skip index 0: roc_curve prepends a sentinel (threshold=max+1, tpr=0, fpr=0, acc=0.5)
+        # which np.argmax would return whenever no real threshold achieves acc > 0.5
+        max_idx = np.argmax(acc[1:]) + 1
+        
         return thresholds[max_idx]
 
     # perform membership inference attack based on whether the input is correctly classified or not
@@ -132,7 +144,7 @@ class black_box_benchmarks(object):
     # perform membership inference attack by thresholding feature values 
     # --- this picks a different threshold for each class
     # the feature can be prediction confidence, (negative) prediction entropy, and (negative) modified entropy
-    def _mem_inf_thre(self, v_name, s_tr_values, s_te_values, t_tr_values, t_te_values):
+    def _mem_inf_thre_class(self, v_name, s_tr_values, s_te_values, t_tr_values, t_te_values):
         t_tr_mem, t_te_non_mem = 0, 0
         for num in range(self.num_classes):
             thre = self._thre_setting(
@@ -145,7 +157,26 @@ class black_box_benchmarks(object):
         t_te_acc = t_te_non_mem / (len(self.t_te_labels) + 0.0)
         mem_inf_acc = 0.5 * (t_tr_acc + t_te_acc)
         print(
-            "For membership inference attack via {n}, the attack acc is {acc1:.3f}, with train acc {acc2:.3f} and test acc {acc3:.3f}".format(
+            "For MIA via {n}, with different thresholds per class: the attack acc is {acc1:.3f}, with train acc {acc2:.3f} and test acc {acc3:.3f}".format(
+                n=v_name, acc1=mem_inf_acc, acc2=t_tr_acc, acc3=t_te_acc
+            )
+        )
+        return t_tr_acc, t_te_acc
+    
+    # picks one threshold for ALL classes
+    def _mem_inf_thre_no_class(self, v_name, s_tr_values, s_te_values, t_tr_values, t_te_values):
+        
+        t_tr_mem, t_te_non_mem = 0, 0
+        
+        thre = self._thre_setting(s_tr_values, s_te_values)
+        t_tr_mem += np.sum(t_tr_values >= thre)
+        t_te_non_mem += np.sum(t_te_values < thre)
+        
+        t_tr_acc = t_tr_mem / (len(self.t_tr_labels) + 0.0)
+        t_te_acc = t_te_non_mem / (len(self.t_te_labels) + 0.0)
+        mem_inf_acc = 0.5 * (t_tr_acc + t_te_acc)
+        print(
+            "For MIA via {n}, with one threshold across all classes: the attack acc is {acc1:.3f}, with train acc {acc2:.3f} and test acc {acc3:.3f}".format(
                 n=v_name, acc1=mem_inf_acc, acc2=t_tr_acc, acc3=t_te_acc
             )
         )
@@ -163,10 +194,22 @@ class black_box_benchmarks(object):
                 )
             )
         if (all_methods) or ("confidence" in benchmark_methods):
-            ret["confidence"] = dict(
+            ret["confidence_class"] = dict(
                 zip(
                     ["retain_test_member", "forget_non_member"], 
-                    self._mem_inf_thre(
+                    self._mem_inf_thre_class(
+                        "confidence",
+                        self.s_tr_conf,
+                        self.s_te_conf,
+                        self.t_tr_conf,
+                        self.t_te_conf,
+                    )
+                )
+            )
+            ret["confidence_no_class"] = dict(
+                zip(
+                    ["retain_test_member", "forget_non_member"], 
+                    self._mem_inf_thre_no_class(
                         "confidence",
                         self.s_tr_conf,
                         self.s_te_conf,
@@ -176,10 +219,22 @@ class black_box_benchmarks(object):
                 )
             )
         if (all_methods) or ("entropy" in benchmark_methods):
-            ret["entropy"] = dict(
+            ret["entropy_class"] = dict(
                 zip(
                     ["retain_test_member", "forget_non_member"], 
-                    self._mem_inf_thre(
+                    self._mem_inf_thre_class(
+                        "entropy",
+                        -self.s_tr_entr,
+                        -self.s_te_entr,
+                        -self.t_tr_entr,
+                        -self.t_te_entr,
+                    )
+                )
+            )
+            ret["entropy_no_class"] = dict(
+                zip(
+                    ["retain_test_member", "forget_non_member"], 
+                    self._mem_inf_thre_no_class(
                         "entropy",
                         -self.s_tr_entr,
                         -self.s_te_entr,
@@ -189,10 +244,22 @@ class black_box_benchmarks(object):
                 )
             )
         if (all_methods) or ("modified entropy" in benchmark_methods):
-            ret["m_entropy"] = dict(
+            ret["m_entropy_class"] = dict(
                 zip(
                     ["retain_test_member", "forget_non_member"], 
-                    self._mem_inf_thre(
+                    self._mem_inf_thre_class(
+                        "modified entropy",
+                        -self.s_tr_m_entr,
+                        -self.s_te_m_entr,
+                        -self.t_tr_m_entr,
+                        -self.t_te_m_entr,
+                    )
+                )
+            )
+            ret["m_entropy_no_class"] = dict(
+                zip(
+                    ["retain_test_member", "forget_non_member"], 
+                    self._mem_inf_thre_no_class(
                         "modified entropy",
                         -self.s_tr_m_entr,
                         -self.s_te_m_entr,
