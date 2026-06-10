@@ -14,7 +14,7 @@ import wandb
 
 
 
-def UnlearnerLoss(output, labels, full_teacher_logits, unlearn_teacher_logits, KL_temperature):
+def BadTeacherLoss(output, labels, full_teacher_logits, unlearn_teacher_logits, KL_temperature):
     
     labels = torch.unsqueeze(labels, dim=1)
     
@@ -47,7 +47,7 @@ def UnlearnerLoss(output, labels, full_teacher_logits, unlearn_teacher_logits, K
 #         # compute our own output and loss
 #         output = model(x)
 #         optimizer.zero_grad()
-#         loss = UnlearnerLoss(output = output, labels=y, full_teacher_logits=full_teacher_logits, 
+#         loss = BadTeacherLoss(output = output, labels=y, full_teacher_logits=full_teacher_logits, 
 #                 unlearn_teacher_logits=unlearn_teacher_logits, KL_temperature=KL_temperature)
 #         loss.backward()
 #         optimizer.step()
@@ -97,7 +97,7 @@ def bad_teacher_iter(unlearning_loader, model, unlearning_teacher, full_trained_
 
         output = model(x)
         optimizer.zero_grad()
-        loss = UnlearnerLoss(output=output, labels=y, full_teacher_logits=full_teacher_logits,
+        loss = BadTeacherLoss(output=output, labels=y, full_teacher_logits=full_teacher_logits,
                 unlearn_teacher_logits=unlearn_teacher_logits, KL_temperature=KL_temperature)
         loss.backward()
         optimizer.step()

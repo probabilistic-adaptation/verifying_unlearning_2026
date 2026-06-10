@@ -1,18 +1,20 @@
 from torch.nn import functional as F
 import torch
+from tqdm import tqdm
 
 def JSDiv(p, q):
     m = (p + q) / 2
-    return 0.5 * F.kl_div(torch.log(p), m) + 0.5 * F.kl_div(torch.log(q), m)
+    return 0.5 * F.kl_div(torch.log(m), p, reduction='batchmean') + 0.5 * F.kl_div(torch.log(m), q, reduction='batchmean')
 
 
 # ZRF/UnLearningScore
-def UnLearningScore(tmodel, gold_model, forget_dl, batch_size, device):
+def UnLearningScore(tmodel, gold_model, forget_dl, device):
     model_preds = []
     gold_model_preds = []
     with torch.no_grad():
-        for batch in forget_dl:
-            x, y, cy = batch
+        for batch in tqdm(forget_dl):
+            # x, y, cy = batch
+            x, _ = batch
             x = x.to(device)
             model_output = tmodel(x)
             gold_model_output = gold_model(x)

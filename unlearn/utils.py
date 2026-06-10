@@ -233,7 +233,7 @@ from .FT import FT, FT_l1
 # from .boundary_ex import boundary_expanding
 from .boundary_sh import boundary_shrink
 from .bad_teacher import bad_teacher, BadTeacherUnLearningData
-
+from .scrub import scrub, DistillKL
 
 def raw():
     pass
@@ -277,6 +277,8 @@ def get_unlearn_method(name):
         return boundary_shrink
     elif name == "bad_teacher":
         return bad_teacher
+    elif name == "scrub":
+        return scrub
     # elif name == "RL_proximal":
     #     return RL_proximal
     else:
@@ -321,7 +323,7 @@ def do_unlearning(
     print(f"Executing unlearning with {method}...\n")
 
     # if we're doing any of the knowledge distillation methods, then there's some extra set up we need outside the epoch loop
-    if method in ["bad_teacher"]:
+    if method == "bad_teacher":
         # need to make unlearning dataset
         retain_loader = dataloaders["retain"]
         retain_keep_loader, _ = split_random(dataloaders["retain"], p = .3, seed = seed, batch_size=retain_loader.batch_size, shuffle = False)
@@ -334,18 +336,25 @@ def do_unlearning(
             pin_memory=True
             )
 
-        # `model` here is the student model, which at this time is a copy of the base model, i.e. the full_trained teacher, so we can init the good teacher as such
-        full_trained_teacher = copy.deepcopy(model).to(device)
-        
-        # we need the unlearning teacher to be the same model architecture
-        # initialized in the same way as the full_trained_teacher, but not trained
-        # (we pass it as an argument for convenience)
-        unlearning_teacher = blank_model.to(device)
-
-        # teachers are in eval mode, student is in train
-        full_trained_teacher.eval()
+        full_trained_teacher = copy.deepcopy(model).to(device) # `model` here is the student model, which at this time is a copy of the base model, i.e. the full_trained teacher, so we can init the good teacher as such
+        unlearning_teacher = blank_model.to(device) # we need the unlearning teacher to be the same model architecture, initialized in the same way as the full_trained_teacher, but not trained (we pass it as an argument for convenience)
+        full_trained_teacher.eval() # teachers are in eval mode, student is in train
         unlearning_teacher.eval()
         opt = torch.optim.Adam(model.parameters(), lr = unlearning_lr)
+
+    if method == "scrub":
+
+            # set up scrub criterion and opt
+            # following their advice in the paper, we default to using Adam, since they say it's best for large-scale data (which is all of ours)
+            model_t = copy.deepcopy(model)
+            # model_s = copy.deepcopy(model)
+            model.to(device) # this IS the "student model"
+            model_t.to(device)
+            opt = torch.optim.Adam(model.parameters(), lr=unlearning_lr, weight_decay=.0005)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=num_epochs)
+            criterion_cls = nn.CrossEntropyLoss()
+            criterion_div = DistillKL(T = 4)
+
 
     else:
 
@@ -355,7 +364,6 @@ def do_unlearning(
         opt = torch.optim.SGD(model.parameters(), lr=unlearning_lr)
 
         # we do NOT set model.train() otherwise - we would lose Batchnorm statistics that way
-
 
     # create save folder if it doesn't exist
     results_folder = init_folder_if_not_exists( f"{base_results_folder}/{method}" )
@@ -369,7 +377,7 @@ def do_unlearning(
         # ... start the clock
         start_time = time.time()
 
-        # ... do one epoch of the unlearning method,
+        # ... do one round of the unlearning method
         print(f"---------- Epoch {k}\n")
 
         # ... --- the args for bad teacher and other knowledge distillation methods are different
@@ -378,6 +386,10 @@ def do_unlearning(
             # MAYBE COME BACK TO THIS
             model.train()
             model, _ = method_func(unlearning_loader, model, unlearning_teacher, full_trained_teacher, opt, epoch = k, print_freq = print_freq, device = device, w_and_b = w_and_b)
+        
+        elif method == "scrub":
+            # model.train()
+            model, _ = method_func(dataloaders, model, model_t, criterion_cls, criterion_div, opt, scheduler, print_freq, device, epoch = k, w_and_b = w_and_b)
         else:
             model.eval()
             model, _ = method_func(dataloaders, model, criterion, opt, epoch = k, print_freq = print_freq, device = device, w_and_b = w_and_b)
@@ -399,7 +411,7 @@ def do_unlearning(
 
             # ... run some evaluations, and add metadata
             # print(f"[do_unlearning] before measure_unlearning_metrics: model.training = {model.training}")
-            results = measure_unlearning_metrics(model = model, dataloaders = dataloaders, device = device)
+            results, _ = measure_unlearning_metrics(model = model, dataloaders = dataloaders, device = device)
             # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({
                 "type": "unlearn",

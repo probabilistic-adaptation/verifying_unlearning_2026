@@ -13,6 +13,8 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True):
     losses = []
     probs = []
     targets = []
+    entropies = []
+    m_entropies = []
     losses_meter = AverageMeter()
     top1_meter = AverageMeter()
     entropy_meter = AverageMeter()
@@ -31,9 +33,10 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True):
         # compute output
         with torch.no_grad():
             output = model(image)
-            loss = criterion(output, target)
+            loss = criterion(output, target) # this is the actual loss we would normally use
+            per_sample_losses = F.cross_entropy(output, target, reduction='none') # we gather this just for measurements later
 
-        
+
         prob_dist = F.softmax(output, dim=-1)
         output = output.float()
         loss = loss.float()
@@ -44,13 +47,20 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True):
         # update trackers
         losses_meter.update(loss.item(), image.size(0))
         top1_meter.update(prec1.item(), image.size(0))
-        entropy_meter.update( torch.mean(entropy(prob_dist)).item(), image.size(0) )
-        m_entropy_meter.update( torch.mean(m_entropy(prob_dist, target)).item(), image.size(0) )
+
+        entr = entropy(prob_dist)
+        entropy_meter.update( torch.mean(entr).item(), image.size(0))
+
+        m_entr = m_entropy(prob_dist, target)
+        m_entropy_meter.update( torch.mean( m_entr ).item(), image.size(0) )
 
         # append loss, prob dist, and targets
-        losses.append( loss.item() )
+        losses.append( per_sample_losses.cpu() )
         probs.append( prob_dist.cpu() )
         targets.append( target.cpu() )
+        entropies.append( entr.cpu() )
+        m_entropies.append( m_entr.cpu() )
+
 
 
         if i % print_freq == 0:
@@ -67,4 +77,16 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True):
 
     print("val_accuracy {top1.avg:.3f}\n".format(top1=top1_meter))
 
-    return losses_meter.avg, top1_meter.avg, entropy_meter.avg, m_entropy_meter.avg, losses, torch.cat(probs), torch.cat(targets)
+    out = {
+        "avg_loss": losses_meter.avg,
+        "avg_acc": top1_meter.avg,
+        "avg_entr": entropy_meter.avg,
+        "avg_m_entr": m_entropy_meter.avg,
+        "losses": torch.cat(losses),
+        "probs": torch.cat(probs),
+        "targets": torch.cat(targets),
+        "entropies": torch.cat(entropies),
+        "m_entropies": torch.cat(m_entropies)
+    }
+
+    return out

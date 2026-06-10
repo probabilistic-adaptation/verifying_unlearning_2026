@@ -177,9 +177,10 @@ def replace_indexes(
         try:
             dataset.targets[indexes] = dataset.targets[new_indexes]
         except:
-            dataset.labels[indexes] = dataset.labels[new_indexes]
-        else:
-            dataset._labels[indexes] = dataset._labels[new_indexes]
+            try:
+                dataset.labels[indexes] = dataset.labels[new_indexes]
+            except:
+                dataset._labels[indexes] = dataset._labels[new_indexes]
     else:
         # Notice the -1 to make class 0 work
         try:

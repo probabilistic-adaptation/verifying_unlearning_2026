@@ -7,7 +7,7 @@ from models.archs.AllCNN import AllCNN
 
 
 
-def init_model(model_class, checkpoint_path=None):
+def init_model(model_class, num_classes = None, checkpoint_path=None):
 
     if model_class == "ConvNet":
 
@@ -19,7 +19,7 @@ def init_model(model_class, checkpoint_path=None):
     elif model_class == "CIFARNET":
         model = CIFARNET()
     elif model_class == "ResNet":
-        model = resnet18()
+        model = resnet18(num_classes = num_classes)
     elif model_class == "AllCNN":
         model = AllCNN()
 
