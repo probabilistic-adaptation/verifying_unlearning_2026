@@ -16,7 +16,8 @@
         "num_epochs": 75,
         "learning_rate": 0.001,
         "weight_decay": 0.0001,
-        "batch_print_freq": 5
+        "batch_print_freq": 5,
+        "pretrained_seed": 4
     },
     "unlearning": {
         "methods": [
@@ -33,7 +34,7 @@
         "percents_to_unlearn": null,
         "learning_rate": {
             "GA": 5e-05,
-            "FT": 0.001,
+            "FT": 0.01,
             "boundary_shrink": 1e-05,
             "bad_teacher": 5e-05,
             "scrub": 1e-05
@@ -46,5 +47,5 @@
             "scrub": 3
         }
     },
-    "GRAND_SEED": 3015
+    "GRAND_SEED": 4
 }

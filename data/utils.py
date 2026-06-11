@@ -28,6 +28,7 @@ def setup_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def get_loader_from_dataset(dataset, batch_size, shuffle=True, num_workers=0):

@@ -1,0 +1,45 @@
+{
+    "forget_loss": 0.01482386436611414,
+    "forget_acc": 99.53999968261719,
+    "forget_entr": 0.024836205476522447,
+    "forget_m_entr": 0.015359705118834973,
+    "retain_loss": 0.009454349406560262,
+    "retain_acc": 99.71111108940973,
+    "retain_entr": 0.018013210875458187,
+    "retain_m_entr": 0.008767807318435775,
+    "test_loss": 0.3230827007293701,
+    "test_acc": 92.79,
+    "test_entr": 0.0641652804017067,
+    "test_m_entr": 0.5330614776611328,
+    "MIA": {
+        "correctness": {
+            "retain_test_member": 0.9974444444444445,
+            "forget_non_member": 0.0046000000000000485
+        },
+        "confidence_class": {
+            "retain_test_member": 0.9482222222222222,
+            "forget_non_member": 0.0
+        },
+        "confidence_no_class": {
+            "retain_test_member": 0.9565555555555556,
+            "forget_non_member": 0.0628
+        },
+        "entropy_class": {
+            "retain_test_member": 0.9416666666666667,
+            "forget_non_member": 0.0
+        },
+        "entropy_no_class": {
+            "retain_test_member": 0.9421111111111111,
+            "forget_non_member": 0.0852
+        },
+        "m_entropy_class": {
+            "retain_test_member": 0.9507777777777778,
+            "forget_non_member": 0.0
+        },
+        "m_entropy_no_class": {
+            "retain_test_member": 0.955,
+            "forget_non_member": 0.0656
+        }
+    },
+    "type": "base"
+}
