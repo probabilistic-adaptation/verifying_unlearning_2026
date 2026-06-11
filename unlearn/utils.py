@@ -411,7 +411,7 @@ def do_unlearning(
 
             # ... run some evaluations, and add metadata
             # print(f"[do_unlearning] before measure_unlearning_metrics: model.training = {model.training}")
-            results, _ = measure_unlearning_metrics(model = model, dataloaders = dataloaders, device = device)
+            results, unlearned_out = measure_unlearning_metrics(model = model, dataloaders = dataloaders, device = device)
             # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({
                 "type": "unlearn",
@@ -429,6 +429,7 @@ def do_unlearning(
                 wandb.log(results)
             with open(os.path.join(epoch_results_folder, f"{forget_set_type}_{unlearning_item}.json"), "w") as f:
                 json.dump(results, f, indent=4)
+            torch.save(unlearned_out, os.path.join(epoch_results_folder, f"{forget_set_type}_{unlearning_item}_out.pth"))
             print(f"Saved epoch {k} results.\n")
 
         # ... and if we're saving checkpoints out,
@@ -439,7 +440,7 @@ def do_unlearning(
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': opt.state_dict()
             }
-            torch.save(checkpoint, unlearn_checkpoint_path, _use_new_zipfile_serialization = False)
+            torch.save(checkpoint, unlearn_checkpoint_path)
 
 
     return model

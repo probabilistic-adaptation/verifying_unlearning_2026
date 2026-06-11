@@ -186,5 +186,8 @@ data/datasets/
 # large model checkpoints
 models/model_checkpoints/
 
+# Claude local preferences
+.claude/
+
 # End of https://www.toptal.com/developers/gitignore/api/python
 

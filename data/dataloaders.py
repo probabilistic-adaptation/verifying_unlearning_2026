@@ -378,7 +378,7 @@ def generic_dataloaders(
 
 
     if class_to_replace is not None:
-        
+
         # replace classes in training, val, and test (modified in place)
         # --- by default replacing ALL indexes of class
         replace_class(train_set, class_to_replace, seed=int(f"{seed}{class_to_replace}"), only_mark=only_mark)
