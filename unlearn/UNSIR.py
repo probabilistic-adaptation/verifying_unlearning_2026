@@ -2,6 +2,7 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
+
 class UNSIR_noise(torch.nn.Module):
     def __init__(self, *dim):
         super().__init__()
@@ -11,6 +12,8 @@ class UNSIR_noise(torch.nn.Module):
         return self.noise
     
 def UNSIR_noise_train(noise, model, forget_class_label, num_epochs, noise_batch_size, device='cuda'):
+    
+    # need to confirm if original paper uses Adam here
     opt = torch.optim.Adam(noise.parameters(), lr = 0.1)
   
     for epoch in range(num_epochs):
@@ -18,7 +21,10 @@ def UNSIR_noise_train(noise, model, forget_class_label, num_epochs, noise_batch_
         inputs = noise()
         labels = torch.zeros(noise_batch_size).to(device)+forget_class_label
         outputs = model(inputs)
+        
+        # the original paper uses .1 as lambda
         loss = -F.cross_entropy(outputs, labels.long()) + 0.1*torch.mean(torch.sum(inputs**2, [1, 2, 3]))
+
         opt.zero_grad()
         loss.backward()
         opt.step()
