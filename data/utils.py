@@ -42,7 +42,7 @@ def split_forget_retain(marked_loader, batch_size, shuffle = True, num_workers=0
     
     `marked_loader` for a training set should set shuffle = True, otherwise False
 
-    This by default "unmarks" the froget set by by undoing the negation applied to targets that originally "marked" them
+    This by default "unmarks" the forget set by by undoing the negation applied to targets that originally "marked" them
     """
     
     # make forget set

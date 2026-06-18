@@ -4,21 +4,10 @@ import time
 import torch
 import wandb
 from trainer.utils import AverageMeter, accuracy
-
-# from .impl import iterative_unlearn
-
 sys.path.append(".")
-# from imagenet import get_x_y_from_data_dict
 
 
-# def l1_regularization(model):
-#     params_vec = []
-#     for param in model.parameters():
-#         params_vec.append(param.view(-1))
-#     return torch.linalg.norm(torch.cat(params_vec), ord=1)
 
-
-# @iterative_unlearn
 def GA(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True):
     
     losses = AverageMeter()

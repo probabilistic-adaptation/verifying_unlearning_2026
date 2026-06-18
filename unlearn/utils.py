@@ -218,7 +218,7 @@ import copy
 
 from .GA import GA
 # from .GA import GA_l1
-# from .RL import RL
+from .RL import RL, setup_RL_loader
 from .FT import FT, FT_l1
 # from .fisher import fisher, fisher_new
 # from .retrain import retrain
@@ -245,8 +245,8 @@ def get_unlearn_method(name):
     function(data_loaders, model, criterion, args)"""
     if name == "raw":
         return raw
-    # elif name == "RL":
-    #     return RL
+    elif name == "RL":
+        return RL
     elif name == "GA":
         return GA
     elif name == "FT":
@@ -364,6 +364,12 @@ def do_unlearning(
         opt = torch.optim.SGD(model.parameters(), lr=unlearning_lr)
 
         # we do NOT set model.train() otherwise - we would lose Batchnorm statistics that way
+
+
+    # If method is one of the RL ones, we need some extra data
+    if "RL" in method:
+        dataloaders["RL_train_loader"] = setup_RL_loader(dataloaders)
+        
 
     # create save folder if it doesn't exist
     results_folder = init_folder_if_not_exists( f"{base_results_folder}/{method}" )
