@@ -8,9 +8,9 @@
     "measure_retrain_results": false,
     "data": {
         "dataset": "CIFAR10",
-        "num_classes": 10,
+        "num_classes": 1000,
         "batch_size": 512,
-        "num_workers": 4,
+        "num_workers": 2,
         "item_to_unlearn": 5
     },
     "training": {
@@ -18,7 +18,7 @@
         "learning_rate": 0.001,
         "weight_decay": 0.0001,
         "batch_print_freq": 5,
-        "pretrained_seed": 4,
+        "pretrained_seed": 1,
         "retrained_from_scratch_seeds": {
             "class": 5,
             "percents": -99
@@ -36,6 +36,7 @@
         "learning_rate": {
             "GA": 5e-05,
             "FT": 0.005,
+            "NegGrad_plus": 0.0001,
             "RL": 0.0001,
             "boundary_shrink": 1e-05,
             "bad_teacher": 5e-05,
@@ -44,6 +45,7 @@
         "batch_print_freq": {
             "GA": 1,
             "FT": 8,
+            "NegGrad_plus": 8,
             "RL": 8,
             "boundary_shrink": 1,
             "bad_teacher": 3,

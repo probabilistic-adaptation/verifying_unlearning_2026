@@ -91,7 +91,8 @@ def hessian(dataset, model, loss_fn, args):
 
 def get_mean_var(p, args, is_base_dist=False):
     """
-    Get the mean and variance for a parameter based on its accumulated second derivative of the loss"""
+    Get the mean and variance for a parameter based on its accumulated second derivative of the loss
+    """
     var = copy.deepcopy(1.0 / (p.grad2_acc + 1e-8))
     var = var.clamp(max=1e3)
     if p.shape[0] == args.num_classes:

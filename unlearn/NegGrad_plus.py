@@ -11,7 +11,7 @@ from itertools import cycle
 sys.path.append(".")
 
 
-def train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True, alpha = .9):
+def train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True, alpha = .99):
     """
     Training loop for "NegGrad+", which ammounts to contrastive fine-tuning on retain set vs. gradient ascent on forget set
 
@@ -78,5 +78,5 @@ def train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, de
 
     return model, top1_meter.avg
 
-def NegGrad_plus(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True, alpha = .9):
+def NegGrad_plus(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, alpha = .99):
     return train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, alpha)
