@@ -59,7 +59,7 @@ hyperparams = {
 
         "ResNet": deep_update(base['ResNet'], {
             "training": {
-                "pretrained_seed": 1, # 4 is real 
+                "pretrained_seed": 4, # 4 is real 
                 "retrained_from_scratch_seeds": {
                     "class": 5,
                     "percents": -99
