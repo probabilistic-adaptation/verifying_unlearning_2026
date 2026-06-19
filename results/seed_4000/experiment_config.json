@@ -1,0 +1,54 @@
+{
+    "description": "Testing NegGrad_plus",
+    "device": "mps",
+    "model_class": "ResNet",
+    "unlearning_type": "class",
+    "num_runs": 1,
+    "measure_base_results": false,
+    "measure_retrain_results": false,
+    "data": {
+        "dataset": "CIFAR10",
+        "num_classes": 10,
+        "batch_size": 512,
+        "num_workers": 4,
+        "item_to_unlearn": 5
+    },
+    "training": {
+        "num_epochs": 75,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_print_freq": 5,
+        "pretrained_seed": 4,
+        "retrained_from_scratch_seeds": {
+            "class": 5,
+            "percents": -99
+        }
+    },
+    "unlearning": {
+        "methods": [
+            "NegGrad_plus"
+        ],
+        "num_epochs": 10,
+        "measure_every": 1,
+        "save_checkpoints_at": [
+            10
+        ],
+        "learning_rate": {
+            "GA": 5e-05,
+            "FT": 0.005,
+            "RL": 0.0001,
+            "boundary_shrink": 1e-05,
+            "bad_teacher": 5e-05,
+            "scrub": 0.0005
+        },
+        "batch_print_freq": {
+            "GA": 1,
+            "FT": 8,
+            "RL": 8,
+            "boundary_shrink": 1,
+            "bad_teacher": 3,
+            "scrub": 3
+        }
+    },
+    "GRAND_SEED": 4000
+}
