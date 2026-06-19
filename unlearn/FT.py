@@ -103,3 +103,55 @@ def FT(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_an
 # @iterative_unlearn
 def FT_l1(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True, mask=None, with_l1=True):
     return FT_iter(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, mask, with_l1 = True)
+
+
+# import copy
+# import pruner
+# import trainer
+
+
+# def FT_prune(data_loaders, model, criterion, args, mask=None):
+#     test_loader = data_loaders["test"]
+
+#     # save checkpoint
+#     initialization = copy.deepcopy(model.state_dict())
+
+#     # unlearn
+#     FT_l1(data_loaders, model, criterion, args, mask)
+
+#     # val
+#     pruner.check_sparsity(model)
+#     trainer.validate(test_loader, model, criterion, args)
+
+#     return model
+
+
+# import pruner
+
+# from .FT import FT_iter
+# from .impl import iterative_unlearn
+
+# prune_step = 2
+
+
+# @iterative_unlearn
+# def FT_prune_bi(data_loaders, model, criterion, optimizer, epoch, args):
+#     # switch to train mode
+#     model.train()
+
+#     # prune
+#     prune_rate = 1 - (1 - args.rate) ** (
+#         1 / ((args.unlearn_epochs - 1) // prune_step + 1)
+#     )
+
+#     if (args.unlearn_epochs - epoch) % prune_step == 0:
+#         if args.random_prune:
+#             print("random pruning")
+#             pruner.pruning_model_random(model, prune_rate)
+#         else:
+#             print("L1 pruning")
+#             pruner.pruning_model(model, prune_rate)
+
+#     pruner.check_sparsity(model)
+
+#     return FT_iter(data_loaders, model, criterion, optimizer, epoch, args)
