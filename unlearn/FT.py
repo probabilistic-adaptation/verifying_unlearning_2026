@@ -68,8 +68,6 @@ def FT_iter(
         
         # measure accuracy and record loss
         prec1 = accuracy(output.data, target)[0]
-
-        # update trackers
         losses_meter.update(loss.item(), image.size(0))
         top1_meter.update(prec1.item(), image.size(0))
 

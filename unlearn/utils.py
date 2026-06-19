@@ -220,6 +220,7 @@ from .GA import GA
 # from .GA import GA_l1
 from .RL import RL, setup_RL_loader
 from .FT import FT, FT_l1
+from .NegGrad_plus import NegGrad_plus
 # from .fisher import fisher, fisher_new
 # from .retrain import retrain
 # from .impl import load_unlearn_checkpoint, save_unlearn_checkpoint
@@ -253,6 +254,8 @@ def get_unlearn_method(name):
         return FT
     elif name == "FT_l1":
         return FT_l1
+    elif name == "NegGrad_plus":
+        return NegGrad_plus
     # elif name == "fisher":
     #     return fisher
     # elif name == "retrain":
@@ -394,7 +397,7 @@ def do_unlearning(
             model, _ = method_func(unlearning_loader, model, unlearning_teacher, full_trained_teacher, opt, epoch = k, print_freq = print_freq, device = device, w_and_b = w_and_b)
         
         elif method == "scrub":
-            # model.train()
+            model.eval()
             model, _ = method_func(dataloaders, model, model_t, criterion_cls, criterion_div, opt, scheduler, print_freq, device, epoch = k, w_and_b = w_and_b)
         else:
             model.eval()
