@@ -186,6 +186,9 @@ data/datasets/
 # large model checkpoints
 models/model_checkpoints/
 
+# large results things
+results/**/*.pth
+
 # Claude local preferences
 .claude/
 
