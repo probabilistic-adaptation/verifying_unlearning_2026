@@ -6,7 +6,7 @@ import numpy as np
 # import pruner
 import torch
 # from pruner import extract_mask, prune_model_custom, remove_prune
-from evaluation.utils import measure_unlearning_metrics
+from evaluation.utils import measure_solo_and_comparison_metrics
 import wandb
 from trainer.utils import init_folder_if_not_exists
 from torch.utils.data import DataLoader
@@ -313,7 +313,6 @@ def do_unlearning(
         print_freq,
         blank_model,
         seed,
-        base_out_path,
         retrained_out_path
         ):
     """
@@ -422,12 +421,11 @@ def do_unlearning(
 
             # ... run some evaluations, and add metadata
             # print(f"[do_unlearning] before measure_unlearning_metrics: model.training = {model.training}")
-            results, unlearned_out = measure_unlearning_metrics(
+            results, unlearned_out = measure_solo_and_comparison_metrics(
                 model = model, 
                 dataloaders = dataloaders, 
-                device = device, 
-                base_out_path = base_out_path,
-                retrained_out_path = retrained_out_path
+                device = device,
+                reference_out_path = retrained_out_path
                 )
             # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({

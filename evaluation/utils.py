@@ -127,7 +127,7 @@ def measure_solo_metrics(model, dataloaders, device):
 
 
 
-def measure_solo_and_comparison_metrics(model, dataloaders, device, base_out_path = None, reference_out_path = None, main_name = "unlearned", reference_name = "retrained"):
+def measure_solo_and_comparison_metrics(model, dataloaders, device, reference_out_path = None, main_name = "unlearned", reference_name = "retrained"):
     """
     Measure ALL unlearning metrics, including those which require a reference model for comparison
     """
@@ -137,54 +137,41 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, base_out_pat
     # load your reference out object (usually retrain from scratch)
     reference_out = torch.load(reference_out_path)
 
+    # Tug-of-War metric
+    da_forget = abs(main_results["acc"]["forget"] - reference_out["forget"]["avg_acc"])
+    da_retain = abs(main_results["acc"]["retain"] - reference_out["retain"]["avg_acc"])
+    da_test = abs(main_results["acc"]["test"] - reference_out["test"]["avg_acc"])
+
+    ToW = (1 - da_forget) * (1 - da_retain) * (1 - da_test)
+    main_results.update({
+        "ToW": ToW
+    })
+
     print(f"Evaluating differences/distances between {main_name} and {reference_name} outputs ...\n")
-    print("Absolute Distance ...")
-    dist1 = absolute_distance( 
-        main_out['forget']['probs'], 
-        reference_out['forget']['probs']
-        )
-    print("L2 ...")
-    dist2 = l2_distance( 
-        main_out['forget']['probs'], 
-        reference_out['forget']['probs']
-        )
-    print("JS Divergence ...")
-    dist3 = JSDiv( 
-        main_out['forget']['probs'], 
-        reference_out['forget']['probs']
-        )
-    print(f"KL Divergence - {reference_name} vs. {main_name}, avg over forget + retain ...")
-    dist4 = kl_div_metric( 
-        reference_out['forget']['probs'],
-        main_out['forget']['probs'],
-        reference_out['retain']['probs'],
-        main_out['retain']['probs']
-        
-        )
-    print(f"Wasserstein distance - {main_name}, forget vs. test losses ...")
-    dist5 = wasserstein_distance(
-        main_out['forget']["losses"], 
-        main_out['test']["losses"]
-        )
     
     main_results.update({ 
         
         "outputs": {
-            "forget": {
-                f"{reference_name}_vs_{main_name}": {
-                    "absolute_distance": dist1,
-                    "l2_distance": dist2,
-                    "JS_divergence": dist3,
+            
+            f"{reference_name}_vs_{main_name}": {
+                "forget": {
+                    "absolute_distance": absolute_distance( main_out['forget']['probs'], reference_out['forget']['probs'] ),
+                    "l2_distance": l2_distance( main_out['forget']['probs'], reference_out['forget']['probs']),
+                    "JS_divergence": JSDiv( main_out['forget']['probs'], reference_out['forget']['probs']),
+                    },
+                "retain": {
+                    "absolute_distance": absolute_distance( main_out['retain']['probs'], reference_out['retain']['probs'] ),
+                    },
+                "test":{
+                    "absolute_distance": absolute_distance( main_out['test']['probs'], reference_out['test']['probs'] ),
+                    },
+                "forget_test_avg": {
+                    "KL_divergence": kl_div_metric( reference_out['forget']['probs'], main_out['forget']['probs'], reference_out['retain']['probs'], main_out['retain']['probs'] )
                     }
                 },
-            "forget_test_avg": {
-                f"{reference_name}_vs_{main_name}": {
-                    "KL_divergence": dist4
-                    }
-                },
-            "forget_vs_test": {
-                f"{main_name}": {
-                    "wasserstein_distance": dist5
+            f"{main_name}": {
+                "forget_vs_test": {
+                    "wasserstein_distance": wasserstein_distance(main_out['forget']["losses"], main_out['test']["losses"])
                     }
                 }
             }
