@@ -7,52 +7,49 @@ from trainer.val import validate
 from evaluation.MIA import MIA
 from evaluation.SVC_MIA import SVC_MIA
 
+from evaluation.distances import l2_distance, JSDiv, ZRFScore, absolute_distance, kl_div_metric
+from scipy.stats import wasserstein_distance
 
 
-
-def measure_unlearning_metrics(model, dataloaders, device):
+def measure_unlearning_metrics(model, dataloaders, device, base_out = None, retrained_out = None):
 
     # fill in base information
-    results = {}
     criterion= nn.CrossEntropyLoss()
     model.eval() # just overwhelmingly confirm that we are in eval mode here, regardless of whether the model was passed in eval mode
     
     # add in metrics, as you'd like
-
     # we deliberately set `print_freq` very high so we dont actually print anything
-
     print("Evaluating forget set metrics...\n")
     forget_out = validate(dataloaders["forget"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
-    results.update(
-        {
-            "forget_loss": forget_out["avg_loss"],
-            "forget_acc": forget_out["avg_acc"],
-            "forget_entr": forget_out["avg_entr"],
-            "forget_m_entr": forget_out["avg_m_entr"],
-        }
-    )
 
     print("Evaluating retain set metrics...\n")
     retain_out = validate(dataloaders["retain"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
-    results.update(
-        {
-            "retain_loss": retain_out["avg_loss"],
-            "retain_acc": retain_out["avg_acc"],
-            "retain_entr": retain_out["avg_entr"],
-            "retain_m_entr": retain_out["avg_m_entr"],
-        }
-    )
 
     print("Evaluating test set metrics...\n")
     test_out = validate(dataloaders["test"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
-    results.update(
-        {
-            "test_loss": test_out["avg_loss"],
-            "test_acc": test_out["avg_acc"],
-            "test_entr": test_out["avg_entr"],
-            "test_m_entr": test_out["avg_m_entr"],
-        }
-    )
+
+    results = {
+        "acc": {
+            "forget":forget_out["avg_acc"],
+            "retain":retain_out["avg_acc"],
+            "test": test_out["avg_acc"],
+            },
+        "loss": {
+            "forget":forget_out["avg_loss"],
+            "retain":retain_out["avg_loss"],
+            "test": test_out["avg_loss"],
+            },
+        "entropy": {
+            "forget":forget_out["avg_entr"],
+            "retain":retain_out["avg_entr"],
+            "test": test_out["avg_entr"],
+            },
+        "m_entropy": {
+            "forget":forget_out["avg_m_entr"],
+            "retain":retain_out["avg_m_entr"],
+            "test": test_out["avg_m_entr"],
+            }
+            }
 
     # now need to gather output dists and labels for retain_one and retain_two, for the MIAs
     # Both MIAs recompute entropy and m-entropy, which is a bit of wasted computation,
@@ -61,6 +58,16 @@ def measure_unlearning_metrics(model, dataloaders, device):
     print("Running through `retain_one` and `retain_two` for MIAs...\n")
     retain_one_out = validate(dataloaders["retain_one"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
     retain_two_out = validate(dataloaders["retain_two"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
+
+
+    # gathering outputs for unlearned model
+    unlearned_out = {
+        "forget": forget_out,
+        "retain": retain_out,
+        "test": test_out,
+        "retain_one": retain_one_out,
+        "retain_two": retain_two_out,
+    }
     
     print("Performing threshold MIA attack...\n")
     attack_results = MIA(
@@ -72,7 +79,22 @@ def measure_unlearning_metrics(model, dataloaders, device):
         device = device
         )
     
-    results["MIA"] = attack_results
+    # attack results should look something like this:
+    # attack_results = {
+    #     "correctness": #,
+    #     "class": {
+    #         "confidence": #,
+    #         "entropy": #,
+    #         "m_entropy": #
+    #     },
+    #     "no_class": {
+    #         "confidence": #,
+    #         "entropy": #,
+    #         "m_entropy": #
+    #     }
+    # }
+    
+    results["threshold_MIA"] = attack_results
 
     # # COMMENTING OUT SVC FOR NOW, TAKES TOO LONG
 
@@ -90,16 +112,63 @@ def measure_unlearning_metrics(model, dataloaders, device):
     #     )
     # results["SVC_MIA"] = attack_results
 
-    out = {
-        "forget": forget_out,
-        "retain": retain_out,
-        "test": test_out,
-        "retain_one": retain_one_out,
-        "retain_two": retain_two_out,
-    }
 
 
-    return results, out
+    print("Evaluating differences/distances between unlearned and retrained outputs ...\n")
+    print("Absolute Distance ...")
+    dist1 = absolute_distance( 
+        unlearned_out['forget']['probs'], 
+        retrained_out['forget']['probs']
+        )
+    print("L2 ...")
+    dist2 = l2_distance( 
+        unlearned_out['forget']['probs'], 
+        retrained_out['forget']['probs']
+        )
+    print("JS Divergence ...")
+    dist3 = JSDiv( 
+        unlearned_out['forget']['probs'], 
+        retrained_out['forget']['probs']
+        )
+    print("KL Divergence - retrained vs. unlearned, avg over forget + retain ...")
+    dist4 = kl_div_metric( 
+        retrained_out['forget']['probs'],
+        unlearned_out['forget']['probs'],
+        retrained_out['retain']['probs'],
+        unlearned_out['retain']['probs']
+        
+        )
+    print("Wasserstein distance - unlearned, forget vs. test losses ...")
+    dist5 = wasserstein_distance(
+        unlearned_out['forget']["losses"], 
+        unlearned_out['test']["losses"]
+        )
+    
+    results.update({ 
+        
+        "outputs": {
+            "forget": {
+                "retrained_vs_unlearned": {
+                    "absolute_distance": dist1,
+                    "l2_distance": dist2,
+                    "JS_divergence": dist3,
+                    }
+                },
+            "forget_test_avg": {
+                "retrained_vs_unlearned": {
+                    "KL_divergence": dist4
+                    }
+                },
+            "forget_vs_test": {
+                "unlearned": {
+                    "wasserstein_distance": dist5
+                    }
+                }
+            }
+        })
+
+
+    return results, unlearned_out
     
 
     

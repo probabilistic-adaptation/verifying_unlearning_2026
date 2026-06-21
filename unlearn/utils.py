@@ -312,7 +312,9 @@ def do_unlearning(
         checkpoint_subfolder,
         print_freq,
         blank_model,
-        seed
+        seed,
+        base_out_path,
+        retrained_out_path
         ):
     """
     Router for executing unlearning
@@ -420,7 +422,13 @@ def do_unlearning(
 
             # ... run some evaluations, and add metadata
             # print(f"[do_unlearning] before measure_unlearning_metrics: model.training = {model.training}")
-            results, unlearned_out = measure_unlearning_metrics(model = model, dataloaders = dataloaders, device = device)
+            results, unlearned_out = measure_unlearning_metrics(
+                model = model, 
+                dataloaders = dataloaders, 
+                device = device, 
+                base_out_path = base_out_path,
+                retrained_out_path = retrained_out_path
+                )
             # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({
                 "type": "unlearn",

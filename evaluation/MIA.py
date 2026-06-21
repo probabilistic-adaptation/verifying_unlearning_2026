@@ -194,7 +194,7 @@ class black_box_benchmarks(object):
                 )
             )
         if (all_methods) or ("confidence" in benchmark_methods):
-            ret["confidence_class"] = dict(
+            ret["class"]["confidence"] = dict(
                 zip(
                     ["retain_test_member", "forget_non_member"], 
                     self._mem_inf_thre_class(
@@ -206,7 +206,7 @@ class black_box_benchmarks(object):
                     )
                 )
             )
-            ret["confidence_no_class"] = dict(
+            ret["no_class"]["confidence"] = dict(
                 zip(
                     ["retain_test_member", "forget_non_member"], 
                     self._mem_inf_thre_no_class(
@@ -219,7 +219,7 @@ class black_box_benchmarks(object):
                 )
             )
         if (all_methods) or ("entropy" in benchmark_methods):
-            ret["entropy_class"] = dict(
+            ret['class']["entropy"] = dict(
                 zip(
                     ["retain_test_member", "forget_non_member"], 
                     self._mem_inf_thre_class(
@@ -231,7 +231,7 @@ class black_box_benchmarks(object):
                     )
                 )
             )
-            ret["entropy_no_class"] = dict(
+            ret["no_class"]["entropy"] = dict(
                 zip(
                     ["retain_test_member", "forget_non_member"], 
                     self._mem_inf_thre_no_class(
@@ -244,7 +244,7 @@ class black_box_benchmarks(object):
                 )
             )
         if (all_methods) or ("modified entropy" in benchmark_methods):
-            ret["m_entropy_class"] = dict(
+            ret["class"]["m_entropy"] = dict(
                 zip(
                     ["retain_test_member", "forget_non_member"], 
                     self._mem_inf_thre_class(
@@ -256,7 +256,7 @@ class black_box_benchmarks(object):
                     )
                 )
             )
-            ret["m_entropy_no_class"] = dict(
+            ret["no_class"]["m_entropy"] = dict(
                 zip(
                     ["retain_test_member", "forget_non_member"], 
                     self._mem_inf_thre_no_class(
