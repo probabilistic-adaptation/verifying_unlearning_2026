@@ -5,10 +5,17 @@
 
 hyperparams_and_results = {
 
-    ~paper,                 ~method,    ~hyperparam_choices,                                    ~forget_acc,    ~retain_acc,    ~test_acc
-    Golatkar et al 2020,    FT,         lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10   ??              ??              ??
+    ~paper,                     ~method,     ~hyperparam_choices,                                       ~forget_acc,       ~retain_acc,      ~test_acc
+    Golatkar et al 2020,        FT,          lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10      99.3 ± 0.5         100 ± 0.0         82.8 ± 0.1
+    Golatkar et al 2020,        NegGrad+,    lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10      0 ± 0.1            100 ± 0.0         77.2 ± 0.1
+    Golatkar et al 2020,        RL,          lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10      6.8 ± 5.7          100 ± 0.0         76.9 ± 0.2
+    Golatkar et al 2020,        Fisher,      ??                                                         0 ± 0.0            96.2 ± 0.4        74.2 ± 0.1
 
-
+    Kurmanji et al 2023,        FT,	                                                                    100 ± 0 	       100 ± 0	        83.59 ± 0.09
+    Kurmanji et al 2023,        NegGrad+,                                                               8.74 ± 7.73 	   98.26 ± 2.55	    82.16 ± 1.46
+    Kurmanji et al 2023,        FIsher,                                                                 0 ± 0	           97.55 ± 0.84	    73.58 ± 1.41
+    Kurmanji et al 2023,        Bad-T,                                                                  5.33 ± 6.12	       88.66 ± 1.82	    80.44 ± 1.44
+    Kurmanji et al 2023,        SCRUB,                                                                  0 ± 0	           99.49 ± 0.02	    84.27 ± 0.17
 
 
 
