@@ -57,4 +57,32 @@
     "outputs": {
         "retrained_vs_unlearned": {
             "forget": {
-                "absolute_distance": 
+                "absolute_distance": 1.9837040901184082,
+                "l2_distance": 1.3561427593231201,
+                "JS_divergence": 0.6822140216827393
+            },
+            "retain": {
+                "absolute_distance": 1.773863673210144
+            },
+            "test": {
+                "absolute_distance": 0.2937464714050293
+            },
+            "forget_test_avg": {
+                "KL_divergence": 12.595297813415527
+            }
+        },
+        "unlearned": {
+            "forget_vs_test": {
+                "wasserstein_distance": 0.30207274496482034
+            }
+        }
+    },
+    "type": "unlearn",
+    "epoch": 1,
+    "run": 1,
+    "forget_set_type": "class",
+    "unlearning_item": 5,
+    "method": "NegGrad_plus",
+    "epoch_duration": 18.271052598953247,
+    "total_unlearning_time_up_to_now": 18271.052598953247
+}

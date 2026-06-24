@@ -1,0 +1,17 @@
+
+
+
+
+
+hyperparams_and_results = {
+
+    ~paper,                 ~method,    ~hyperparam_choices,                                    ~forget_acc,    ~retain_acc,    ~test_acc
+    Golatkar et al 2020,    FT,         lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10   ??              ??              ??
+
+
+
+
+
+
+
+}
