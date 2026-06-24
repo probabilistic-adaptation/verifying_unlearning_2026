@@ -1,47 +1,52 @@
 {
-    "description": "testing reproducibility",
+    "description": "Adding NegGrad_plus to seed 4, testing comparison metrics",
     "device": "cuda",
     "model_class": "ResNet",
+    "unlearning_type": "class",
     "num_runs": 1,
-    "retrain_from_scratch": true,
-    "train_base": false,
     "measure_base_results": true,
+    "measure_retrain_results": true,
     "data": {
         "dataset": "CIFAR10",
         "num_classes": 10,
         "batch_size": 512,
-        "num_workers": 4
+        "num_workers": 4,
+        "item_to_unlearn": 5
     },
     "training": {
         "num_epochs": 75,
         "learning_rate": 0.001,
         "weight_decay": 0.0001,
         "batch_print_freq": 5,
-        "pretrained_seed": 4
+        "pretrained_seed": 4,
+        "retrained_from_scratch_seeds": {
+            "class": 5,
+            "percents": -99
+        }
     },
     "unlearning": {
         "methods": [
-            "FT"
+            "NegGrad_plus"
         ],
         "num_epochs": 10,
         "measure_every": 1,
         "save_checkpoints_at": [
             10
         ],
-        "classes_to_unlearn": [
-            5
-        ],
-        "percents_to_unlearn": null,
         "learning_rate": {
             "GA": 5e-05,
-            "FT": 0.01,
+            "FT": 0.005,
+            "NegGrad_plus": 0.0001,
+            "RL": 0.0001,
             "boundary_shrink": 1e-05,
             "bad_teacher": 5e-05,
-            "scrub": 1e-05
+            "scrub": 0.0005
         },
         "batch_print_freq": {
             "GA": 1,
             "FT": 8,
+            "NegGrad_plus": 8,
+            "RL": 8,
             "boundary_shrink": 1,
             "bad_teacher": 3,
             "scrub": 3

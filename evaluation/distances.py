@@ -28,7 +28,7 @@ def l2_distance(p, q):
 
 def JSDiv(p, q):
     m = (p + q) / 2
-    return 0.5 * F.kl_div(torch.log(m), p, reduction='batchmean') + 0.5 * F.kl_div(torch.log(m), q, reduction='batchmean')
+    return (0.5 * F.kl_div(torch.log(m), p, reduction='batchmean') + 0.5 * F.kl_div(torch.log(m), q, reduction='batchmean')).item()
 
 
 def ZRFScore(tmodel, gold_model, forget_dl, device):
@@ -57,7 +57,7 @@ def absolute_distance(p, q):
     p and q presumed to be blocks of tensors of output probabilities (after softmax)
     size: n_data x n_classes
     """
-    return torch.mean(torch.sum(torch.abs((p - q)), dim = 1))
+    return torch.mean(torch.sum(torch.abs((p - q)), dim = 1)).item()
 
 
 def kl_divergence(p, q):
@@ -72,4 +72,4 @@ def kl_div_metric(forget_probs_one, forget_probs_two, retain_probs_one, retain_p
     """ 
     kl_f = kl_divergence(forget_probs_one, forget_probs_two)
     kl_r = kl_divergence(retain_probs_one, retain_probs_two)
-    return torch.mean( torch.cat([kl_f, kl_r], dim = 0) )
+    return torch.mean( torch.cat([kl_f, kl_r], dim = 0) ).item()

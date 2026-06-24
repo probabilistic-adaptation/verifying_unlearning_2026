@@ -185,7 +185,10 @@ class black_box_benchmarks(object):
 
     # gathering MIA accuracies for all methods in one function
     def _mem_inf_benchmarks(self, all_methods=True, benchmark_methods=[]):
-        ret = {}
+
+        # preinitialize sub-dictinaries
+        ret = {"class": {}, "no_class": {}}
+
         if (all_methods) or ("correctness" in benchmark_methods):
             ret["correctness"] = dict(
                 zip(

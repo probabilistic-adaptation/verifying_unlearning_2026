@@ -1,6 +1,6 @@
 {
-    "description": "Testing NegGrad_plus",
-    "device": "mps",
+    "description": "Adding NegGrad_plus to seed 4, testing comparison metrics",
+    "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "class",
     "num_runs": 1,
@@ -8,9 +8,9 @@
     "measure_retrain_results": false,
     "data": {
         "dataset": "CIFAR10",
-        "num_classes": 1000,
+        "num_classes": 10,
         "batch_size": 512,
-        "num_workers": 2,
+        "num_workers": 4,
         "item_to_unlearn": 5
     },
     "training": {
@@ -18,7 +18,7 @@
         "learning_rate": 0.001,
         "weight_decay": 0.0001,
         "batch_print_freq": 5,
-        "pretrained_seed": 1,
+        "pretrained_seed": 4,
         "retrained_from_scratch_seeds": {
             "class": 5,
             "percents": -99
