@@ -138,9 +138,9 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, reference_ou
     reference_out = torch.load(reference_out_path)
 
     # Tug-of-War metric
-    da_forget = abs(main_results["acc"]["forget"] - reference_out["forget"]["avg_acc"])
-    da_retain = abs(main_results["acc"]["retain"] - reference_out["retain"]["avg_acc"])
-    da_test = abs(main_results["acc"]["test"] - reference_out["test"]["avg_acc"])
+    da_forget = abs(main_results["acc"]["forget"] - reference_out["forget"]["avg_acc"]) / 100
+    da_retain = abs(main_results["acc"]["retain"] - reference_out["retain"]["avg_acc"]) / 100
+    da_test = abs(main_results["acc"]["test"] - reference_out["test"]["avg_acc"]) / 100
 
     ToW = (1 - da_forget) * (1 - da_retain) * (1 - da_test)
     main_results.update({
