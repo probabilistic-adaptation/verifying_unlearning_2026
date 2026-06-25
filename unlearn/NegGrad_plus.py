@@ -78,5 +78,5 @@ def train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, de
 
     return model, top1_meter.avg
 
-def NegGrad_plus(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, alpha = .99):
+def NegGrad_plus(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, alpha = .99, **kwargs):
     return train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, alpha)

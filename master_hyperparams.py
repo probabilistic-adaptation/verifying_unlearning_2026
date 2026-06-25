@@ -13,31 +13,92 @@ base = {
     
     "ResNet":{
         "training": {
-            "num_epochs": 75,
+            "num_epochs": 100,
             "learning_rate": 1e-3,
             "weight_decay": 1e-4,
             "batch_print_freq": 5,
             },
         
         "unlearning": {
-            "learning_rate": {
-                "GA": 5e-5, # recall we are now doing SGD, so the learning rate is different from Adam
-                "FT": 5e-3, # 1e-2 sometimes causes calamitous weight divergence (at least on CIFAR10)
-                "NegGrad_plus": 1e-4,
-                "RL": 1e-4,
-                "boundary_shrink": 1e-5, # from original paper
-                "bad_teacher": 5e-5,
-                "scrub": 5e-4 # 5e-4 is actually what they use for one "round"
+            "FT": {
+                "print_freq": 8,
+
+                # Golatkar et al, 2020a
+                "lr": .01,
+                "opt": "SGD",
+                "weight_decay": 5e-4,
+                "num_epochs": 10
+
+            },
+            "GA": {
+                "print_freq": 1,
+
+                # Golatkar et al, 2020a
+                "lr": .01,
+                "opt": "SGD",
+                "weight_decay": 5e-4,
+                "num_epochs": 10
+            },
+            "NegGrad_plus": {
+                "print_freq": 8,
+                # Golatkar et al, 2020a
+                "lr": .01,
+                "opt": "SGD",
+                "weight_decay": 5e-4,
+                "num_epochs": 10,
+                "alpha": 0.95 # taken from Kurmanji et al 2023
                 },
-            "batch_print_freq": {
-                "GA": 1,
-                "FT": 8,
-                "NegGrad_plus": 8,
-                "RL": 8,
-                "boundary_shrink": 1,
-                "bad_teacher": 3,
-                "scrub": 3,
-                }
+
+            "RL": {
+                "print_freq": 8,
+                # Golatkar et al, 2020a
+                "lr": .01,
+                "opt": "SGD",
+                "weight_decay": 5e-4,
+                "num_epochs": 10
+                },
+            
+            "SalUn": {},
+
+            "boundary_shrink": {
+                "print_freq": 1,
+                # Fan et al 2024
+                "lr": 1e-5,
+                "num_epochs": 10,
+                "bound": 0.1,
+            },
+            
+            "boundary_expansion" :{
+                
+                # Fan et al 2024
+                "lr": 1e-5, # original paper uses 1e-5, Fan et al lists 10^-5 which i dont think is the same
+                "num_epochs": 10,
+            },
+
+            "bad_teacher": {
+                "print_freq": 3,
+                
+                # chundawat et al 2023 (original paper)
+                "lr": 1e-4, 
+                "num_epochs": 2,
+                "opt": "Adam",
+
+                # Kurmanji et al 2023
+                # whole retain set, instead of 30% of retain set from original paper
+                
+                
+            },
+            "scrub": {
+                "print_freq": 3,
+
+                # Kurmanji et al 2023,
+                "opt": "Adam",
+                "weight_decay": 5e-4,
+                "lr": 5e-4,
+                "lr_decay_by": .1,
+                "sgda_epochs": 3,
+                "maxsteps": 2
+            },
             }
         }
     }
@@ -83,11 +144,11 @@ hyperparams = {
                     "class": -99
                     }
                 },
-            "unlearning": {
-                "learning_rate": {
-                    "FT": 1e-3,
-                }
-            }
+            # "unlearning": {
+            #     "learning_rate": {
+            #         "FT": 1e-3,
+            #     }
+            # }
             }
             )
     },

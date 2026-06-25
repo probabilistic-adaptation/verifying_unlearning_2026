@@ -5,20 +5,114 @@
 
 hyperparams_and_results = {
 
-    ~paper,                     ~method,     ~hyperparam_choices,                                       ~forget_acc,       ~retain_acc,      ~test_acc
-    Golatkar et al 2020,        FT,          lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10      99.3 ± 0.5         100 ± 0.0         82.8 ± 0.1
-    Golatkar et al 2020,        NegGrad+,    lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10      0 ± 0.1            100 ± 0.0         77.2 ± 0.1
-    Golatkar et al 2020,        RL,          lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10      6.8 ± 5.7          100 ± 0.0         76.9 ± 0.2
-    Golatkar et al 2020,        Fisher,      ??                                                         0 ± 0.0            96.2 ± 0.4        74.2 ± 0.1
 
-    Kurmanji et al 2023,        FT,	                                                                    100 ± 0 	       100 ± 0	        83.59 ± 0.09
-    Kurmanji et al 2023,        NegGrad+,                                                               8.74 ± 7.73 	   98.26 ± 2.55	    82.16 ± 1.46
-    Kurmanji et al 2023,        FIsher,                                                                 0 ± 0	           97.55 ± 0.84	    73.58 ± 1.41
-    Kurmanji et al 2023,        Bad-T,                                                                  5.33 ± 6.12	       88.66 ± 1.82	    80.44 ± 1.44
-    Kurmanji et al 2023,        SCRUB,                                                                  0 ± 0	           99.49 ± 0.02	    84.27 ± 0.17
+    # ResNet18, CIFAR10, unlearning one class
+
+    ~paper,                     ~method,     ~hyperparam_choices,                                               ~forget_acc,       ~retain_acc,            ~test_acc
+
+    # pretrained on CIFAR100
+    Golatkar et al 2020a,        FT,          lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10              99.3 ± 0.5         100 ± 0.0               82.8 ± 0.1
+    Golatkar et al 2020a,        NegGrad+,    lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10              0 ± 0.1            100 ± 0.0               77.2 ± 0.1
+    Golatkar et al 2020a,        RL,          lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10              6.8 ± 5.7          100 ± 0.0               76.9 ± 0.2
+    Golatkar et al 2020a,        Fisher,      \lambda: 5e-7, use F^{-1/2} instead of F^{-1/4}                    0 ± 0.0            96.2 ± 0.4              74.2 ± 0.1
+
+    # pretrained on CIFAR100
+    Kurmanji et al 2023,        FT,	         lr: .01, opt: SGD, weight_decay: 5e-4, num_epochs: 10              100 ± 0 	       100 ± 0	               83.59 ± 0.09
+    Kurmanji et al 2023,        NegGrad+,    lr: .01, opt: SGD, weight_decay: .1, num_epochs: 10, beta: 0.95    8.74 ± 7.73 	   98.26 ± 2.55	           82.16 ± 1.46
+    Kurmanji et al 2023,        Fisher,                                                                         0 ± 0	           97.55 ± 0.84	           73.58 ± 1.41
+    Kurmanji et al 2023,        Bad-T,       # epochs: 1, opt: Adam, whole retain set                           5.33 ± 6.12	       88.66 ± 1.82	           80.44 ± 1.44
+    Kurmanji et al 2023,        SCRUB,       opt: Adam, weight_decay: 5e-4, init_lr: 5e-4,                      0 ± 0	           99.49 ± 0.02	           84.27 ± 0.17
+                                             lr_decay_by: .1, # epochs: 3, # max steps: 2
+
+    # Tarun et al did not pretrain their original models for very long, all accuracy scores are commensurately lower (likely dont want to replicate their method)
+
+    Tarun et al 2024,           FT,                                                                             24.55               78.11
+    Tarun et al 2024,           GA,                                                                             7.44                66.67
+    Tarun et al 2024,           Fisher,                                                                         0.00                10.85
+    Tarun et al 2024,           UNSIR,                                                                          0.00                71.06
+
+    # they include a nifty table with all their chosen hyperparams (thank you)
+
+    Di et al 2024,              FT,         lr: 5e-2, # epochs: 30,                                             60.43 ± 0.0450     99.58 ± 0.0022         92.26 ± 0.0030         
+    Di et al 2024,              GA,         lr: 1e-3, # epochs: 5,                                              00.07 ± 0.0002     84.78 ± 0.0046         79.42 ± 0.0055         
+    Di et al 2024,              IU,         \alpha: 10                                                          6.19 ± 0.0149      93.39 ± 0.0161         86.44 ± 0.0141         
+    Di et al 2024,              L1-Sparse,  lr: 1e-2, # epochs: 10, \gamma: 5e-4                                9.14 ± 0.0310      99.72 ± 0.0005         92.85 ± 0.0014         
+    Di et al 2024,              RL,         lr: 1e-3, # epochs: 1                                               0.01 ± 0.0001      99.96 ± 0.0000         93.30 ± 0.0008        
+    Di et al 2024,              BE,         lr: 1e-5, # epochs: 10                                              24.77 ± 0.0022     97.10 ± 0.0012         89.84 ± 0.0023         
+    Di et al 2024,              BS,         lr: 1e-5, # epochs: 10                                              25.04 ± 0.0105     96.91 ± 0.0031         89.69 ± 0.0031         
+    Di et al 2024,              SCRUB,      lr: 5e-4. # epochs: 10, T: 4, decay epochs: [3, 5, 9], beta: 0.1    0.00 ± 0.0000      100.00 ± 0.0000        92.69 ± 0.0021         
+
+    Jia et al 2024,             FT,           lr: .01, opt: SGD, # epochs: 10                                   77.47 ± 8.16       99.87 ± 0.04           94.31 ± 0.19
+    Jia et al 2024,             GA,           lr: 1e-4, op: SGD, # epochs: 5                                    6.92 ± 2.29        92.60 ± 0.25           86.64 ± 0.28
+    Jia et al 2024,             Fisher,       greedy search between 10−9 and 10−6                               20.07 ± 8.92       99.45 ± 0.24           94.18 ± 0.08
+    Jia et al 2024,             IU,           first-order WoodFisher approx of Hessian,                         12.18 ± 2.15       97.98 ± 0.21           91.42 ± 0.21
+
+    Fan et al 2024,             FT,           lr: [10^-3, 10^-1], # epochs: 10                                  68.31,             99.92,                 94.78
+    Fan et al 2024,             RL,           lr: [10^-3, 10^-1], # epochs: 10                                  10.67,             99.92,                 94.52, 
+    Fan et al 2024,             GA,           lr: [10^-5, 10^-3], # epochs: 5                                   0.09,              38.92,                 38.18
+    Fan et al 2024,             IU,           alpha: [1, 20]                                                    2.98,              94.78,                 89.10
+    Fan et al 2024,             BE,           lr: [10^-6, 10^-4], # epochs: 10                                  20.87,             97.71,                 91.88,
+    Fan et al 2024,             BS,           lr: [10^-6, 10^-4], # epochs: 10, FGSM step size: 0.1             20.40,             97.79,                 91.94
+    Fan et al 2024,             L1-sparse,    gamma: [10^-6, 10^-4], lr: [10^-3, 10^-1]                         0.00,              97.92,                 92.29
+    Fan et al 2024,             SalUn,        lr: [5e-4, 5e-2], sparsity: [0.1, 0.9]                            0.09,              99.93,                 94.56
+
+
+    # All-CNN, CIFAR10, unlearning one class
+    # pretrained from scratch, 30 epochs SGD, fixed lr: 0.1, momentum 0.9, batch size: 64
+    
+    Chen et al 2023,        Original Model,                                                                     99.92,             99.97
+    Chen et al 2023,        Retrain,                                                                            0.00,              100.00
+    Chen et al 2023,        FT,                                                                                 0.22,              100.00
+    Chen et al 2023,        GA,                                                                                 7.84,              97.16
+    Chen et al 2023,        RL,                                                                                 10.40,             98.49
+    Chen et al 2023,        BS,                lr: 10^-5, # epochs: 10,                                         5.94,              99.24,
+    Chen et al 2023,        BE,                lr: 10^-5, # epochs: 10,                                         8.96,              98.03,
+    Chen et al 2023,        Amnesiac,                                                                           0.00,              95.79
+    Chen et al 2023,        Fisher,                                                                             1.80,              61.62
+
+    # ResNet18, CASIA-SURF, unlearning one class
+    # tuned using a 3-value grid for each hyperparam
+
+    Triantafillou et al 2024, NegGrad+,         lr: 0.001, # epochs: 1, \alpha: 0.99999
+    Triantafillou et al 2024, SCRUB,            lr: 0.0005, # epochs: 1, # max steps: 1
+    Triantafillou et al 2024, Random Label,     lr: 0.0005, # epochs impair: 2, # epochs repair: 1
+    Triantafillou et al 2024, SalUn,            mask thresh: .5, lr: 5e-4, #e impair: 2, #e repair: 1
+    Triantafillou et al 2024, L1-Sparse,        lr: 0.001, \alpha: 1e-4
 
 
 
+    # ResNet18, CIFAR20, unlearning one class
+    Foster et al 2024,        baseline,                                                                         97.84 ± 1.99,     98.52 ± 0.02
+    Foster et al 2024,        Retrain,                                                                          0.00 ± 0.00,      100.00 ± 0.00
+    Foster et al 2024,        FT,               # epochs: 5                                                     4.32 ± 4.61,      99.72 ± 0.45
+    Foster et al 2024,        Bad-T,                                                                            0.13 ± 0.4,       96.72 ± 0.44
+    Foster et al 2024,        UNSIR,                                                                            90.53 ± 5.68,     99.89 ± 0.06
+    Foster et al 2024,        Random Label,                                                                     0.00 ± 0.00,      99.99 ± 0.02
+    Foster et al 2024,        SSD,             \lambda = 1, \alpha: 10                                          0.00 ± 0.00,      98.42 ± 0.13
+
+    # ResNet9, CIFAR10, unlearning one class
+    Chundawat et al 2023,     Original, 88.50, 84.83
+    Chundawat et al 2023,     Retrain, 0, 85.61
+    Chundawat et al 2023,     GKT, 0, 56.83
+
+    # AllCNN, CIFAR10, unlearning one class
+    Chundawat et al 2023,     Original,                                                                         87.49,            84.05
+    Chundawat et al 2023,     Retrain,                                                                          0,                85.72
+    Chundawat et al 2023,     Bad-T,                                                                            5.56,             83.71
+    Chundawat et al 2023,     Fisher,                                                                           0,                7.61
+    Chundawat et al 2023,     Amnesiac,                                                                         0,                83.47
+    Chundawat et al 2023,     GKT,                                                                              0,                81.97
 
 
 }
+
+
+
+
+
+
+
+
+
+
+

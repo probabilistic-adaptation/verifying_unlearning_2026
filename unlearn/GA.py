@@ -8,7 +8,7 @@ sys.path.append(".")
 
 
 
-def GA(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True):
+def GA(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True, **kwargs):
     
     losses = AverageMeter()
     top1 = AverageMeter()

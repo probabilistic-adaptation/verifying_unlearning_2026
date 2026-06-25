@@ -294,10 +294,7 @@ import torch
 import time
 def do_unlearning(
         base_results_folder,
-        
-        # used to be inside `config`
-        num_epochs,
-        unlearning_lr,
+        method_hyperparams,
         measure_every,
         device,
 
@@ -310,7 +307,6 @@ def do_unlearning(
         w_and_b,
         save_checkpoints_at,
         checkpoint_subfolder,
-        print_freq,
         blank_model,
         seed,
         retrain_out_path = None
@@ -325,6 +321,17 @@ def do_unlearning(
 
     method_func = get_unlearn_method(method)
     print(f"Executing unlearning with {method}...\n")
+
+    # establish optimizer first, since we need it in all forks of the if-else later
+    if method_hyperparams["opt"] == "Adam":
+        opt = torch.optim.Adam(model.parameters(), lr=method_hyperparams["lr"], weight_decay=method_hyperparams.get("weight_decay", 0))
+    elif method_hyperparams["opt"] == "SGD":
+        opt = torch.optim.SGD(model.parameters(), lr=method_hyperparams["lr"], weight_decay=method_hyperparams.get("weight_decay", 0))
+    else:
+        # default to SGD 
+        opt = torch.optim.SGD(model.parameters(), lr=method_hyperparams["lr"], weight_decay=method_hyperparams.get("weight_decay", 0))
+
+        
 
     # if we're doing any of the knowledge distillation methods, then there's some extra set up we need outside the epoch loop
     if method == "bad_teacher":
@@ -344,7 +351,6 @@ def do_unlearning(
         unlearning_teacher = blank_model.to(device) # we need the unlearning teacher to be the same model architecture, initialized in the same way as the full_trained_teacher, but not trained (we pass it as an argument for convenience)
         full_trained_teacher.eval() # teachers are in eval mode, student is in train
         unlearning_teacher.eval()
-        opt = torch.optim.Adam(model.parameters(), lr = unlearning_lr)
 
     if method == "scrub":
 
@@ -354,18 +360,14 @@ def do_unlearning(
             # model_s = copy.deepcopy(model)
             model.to(device) # this IS the "student model"
             model_t.to(device)
-            opt = torch.optim.Adam(model.parameters(), lr=unlearning_lr, weight_decay=.0005)
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=num_epochs)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=method_hyperparams["sgda_epochs"])
             criterion_cls = nn.CrossEntropyLoss()
-            criterion_div = DistillKL(T = 4)
-
+            criterion_div = DistillKL(T = 4) # This T is hardcoded from the original paper, and also used in Di et al 2024
 
     else:
 
-        # set up unlearning criterion and opt
-        # --- we by default presume SGD, but might want to make this more flexible later
+        # all others use normal cross-entropy loss
         criterion = nn.CrossEntropyLoss()
-        opt = torch.optim.SGD(model.parameters(), lr=unlearning_lr)
 
         # we do NOT set model.train() otherwise - we would lose Batchnorm statistics that way
 
@@ -382,7 +384,7 @@ def do_unlearning(
     total_unlearning_time_ms = 0
 
     # For each epoch ...
-    for k in range(1, num_epochs+1):
+    for k in range(1, method_hyperparams["num_epochs"]+1):
 
         # ... start the clock
         start_time = time.time()
@@ -395,14 +397,14 @@ def do_unlearning(
             # we ONLY set to train on knowledge distillation unlearning
             # MAYBE COME BACK TO THIS
             model.train()
-            model, _ = method_func(unlearning_loader, model, unlearning_teacher, full_trained_teacher, opt, epoch = k, print_freq = print_freq, device = device, w_and_b = w_and_b)
+            model, _ = method_func(unlearning_loader, model, unlearning_teacher, full_trained_teacher, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
         
         elif method == "scrub":
             model.eval()
-            model, _ = method_func(dataloaders, model, model_t, criterion_cls, criterion_div, opt, scheduler, print_freq, device, epoch = k, w_and_b = w_and_b)
+            model, _ = method_func(dataloaders, model, model_t, criterion_cls, criterion_div, opt, scheduler, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
         else:
             model.eval()
-            model, _ = method_func(dataloaders, model, criterion, opt, epoch = k, print_freq = print_freq, device = device, w_and_b = w_and_b)
+            model, _ = method_func(dataloaders, model, criterion, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
         
 
         # ... stop clock for this epoch

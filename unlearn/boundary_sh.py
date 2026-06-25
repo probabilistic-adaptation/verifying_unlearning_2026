@@ -31,10 +31,9 @@ def FGSM_perturb(x, y, device, model=None, bound=None, criterion=None):
 
 # @iterative_unlearn
 def boundary_shrink_iter(
-    dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b=True, test_model=None, mask=None
+    dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b=True, test_model=None, mask=None, bound = .1
 ):
     assert test_model is not None
-    bound = 0.1  # hard coding in the paper
     forget_loader = dataloaders["forget"]
     losses_meter = AverageMeter()
     top1_meter = AverageMeter()
@@ -99,11 +98,11 @@ def boundary_shrink_iter(
     return model, top1_meter.avg
 
 
-def boundary_shrink(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b=True, mask=None):
+def boundary_shrink(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b=True, mask=None, bound = .1, **kwargs):
     
     # the `test` model is always the current model immediately before the unlearning iteration
     # I'm worried this is meant to be the original model always, even after more epochs of this
     test_model = copy.deepcopy(model).to(device) 
     return boundary_shrink_iter(
-        dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, test_model=test_model, mask=mask
+        dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, test_model=test_model, mask=mask, bound = bound
     )

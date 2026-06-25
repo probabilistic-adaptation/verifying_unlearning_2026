@@ -96,12 +96,12 @@ def FT_iter(
 
 
 # @iterative_unlearn
-def FT(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True, mask=None, with_l1=False):
+def FT(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True, mask=None, with_l1=False, **kwargs):
     return FT_iter(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, mask, with_l1)
 
 
 # @iterative_unlearn
-def FT_l1(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True, mask=None, with_l1=True):
+def FT_l1(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b = True, mask=None, with_l1=True, **kwargs):
     return FT_iter(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_and_b, mask, with_l1 = True)
 
 

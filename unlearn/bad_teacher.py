@@ -217,5 +217,5 @@ class BadTeacherUnLearningData(Dataset):
             y = 0
             return x,y
 
-def bad_teacher(unlearning_loader, model, unlearning_teacher, full_trained_teacher, optimizer, epoch, print_freq, device, w_and_b = True, KL_temperature = 1):
+def bad_teacher(unlearning_loader, model, unlearning_teacher, full_trained_teacher, optimizer, epoch, print_freq, device, w_and_b = True, KL_temperature = 1, **kwargs):
     return bad_teacher_iter(unlearning_loader, model, unlearning_teacher, full_trained_teacher, optimizer, epoch, print_freq, device, w_and_b, KL_temperature)

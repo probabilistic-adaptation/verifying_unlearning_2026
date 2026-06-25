@@ -116,7 +116,8 @@ def scrub(dataloaders, model_s, model_t, criterion_cls, criterion_div, optimizer
           # smoothing=0.0,   # weight for swa anchor regularisation (param_dist)
           # sstart=10,       # epoch at which swa updates begin
           maxsteps=2,
-          sgda_epochs=3):
+          sgda_epochs=3,
+          **kwargs):
     
     """
     This executes one "round" of SCRUB, i.e. some combination of max-epochs and min-epochs
