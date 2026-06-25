@@ -295,7 +295,6 @@ import time
 def do_unlearning(
         base_results_folder,
         method_hyperparams,
-        measure_every,
         device,
 
         method,
@@ -305,7 +304,6 @@ def do_unlearning(
         forget_set_type,
         unlearning_item,
         w_and_b,
-        save_checkpoints_at,
         checkpoint_subfolder,
         blank_model,
         seed,
@@ -360,7 +358,7 @@ def do_unlearning(
             # model_s = copy.deepcopy(model)
             model.to(device) # this IS the "student model"
             model_t.to(device)
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=method_hyperparams["sgda_epochs"])
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=method_hyperparams["num_epochs"])
             criterion_cls = nn.CrossEntropyLoss()
             criterion_div = DistillKL(T = 4) # This T is hardcoded from the original paper, and also used in Di et al 2024
 
@@ -413,7 +411,7 @@ def do_unlearning(
 
 
         # ... and if we're measuring results this epoch...,
-        if k % measure_every == 0:
+        if k in method_hyperparams['save_checkpoints_at']:
 
             # make sure we're in eval mode, regardless of whether we are during unlearning
             model.eval()
@@ -449,8 +447,8 @@ def do_unlearning(
             torch.save(unlearned_out, os.path.join(epoch_results_folder, f"{forget_set_type}_{unlearning_item}_out.pth"))
             print(f"Saved epoch {k} results.\n")
 
-        # ... and if we're saving checkpoints out,
-        if k in save_checkpoints_at:
+            # ... and if we're saving checkpoints out,
+        
             unlearn_checkpoint_path = os.path.join(checkpoint_subfolder, f"{method}_epoch_{k}_{forget_set_type}_{unlearning_item}.pth")
             checkpoint = {
                 'epoch': k,

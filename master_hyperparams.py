@@ -27,52 +27,63 @@ base = {
                 "lr": .01,
                 "opt": "SGD",
                 "weight_decay": 5e-4,
-                "num_epochs": 10
+                "num_epochs": 10,
+                "save_checkpoints_at": [5, 10],
 
             },
             "GA": {
                 "print_freq": 1,
 
-                # Golatkar et al, 2020a
-                "lr": .01,
+                # Jia et al 2024
+                "lr": 2e-4, # anything higher than this results in calamitous model utility, any lower (1e-4 from jia et al 2024) and the model doesnt unlearn anything within 5 epochs
                 "opt": "SGD",
-                "weight_decay": 5e-4,
-                "num_epochs": 10
+                "weight_decay": 5e-4, # this is actually not from the paper, we borrow this in keeping with other weight decay applied in Golatkar et al 2020a
+                "num_epochs": 5,
+                "save_checkpoints_at": [3, 5],
             },
             "NegGrad_plus": {
                 "print_freq": 8,
+                
                 # Golatkar et al, 2020a
                 "lr": .01,
                 "opt": "SGD",
                 "weight_decay": 5e-4,
                 "num_epochs": 10,
-                "alpha": 0.95 # taken from Kurmanji et al 2023
+                "save_checkpoints_at": [5, 10],
+                "alpha": 0.999 # Kurmanji et al 2023 use 0.95, but that causes calamitous model collapse
                 },
 
             "RL": {
                 "print_freq": 8,
+                
                 # Golatkar et al, 2020a
                 "lr": .01,
                 "opt": "SGD",
                 "weight_decay": 5e-4,
-                "num_epochs": 10
+                "num_epochs": 10,
+                "save_checkpoints_at": [5, 10],
                 },
             
             "SalUn": {},
 
             "boundary_shrink": {
                 "print_freq": 1,
+                
                 # Fan et al 2024
                 "lr": 1e-5,
                 "num_epochs": 10,
+                "save_checkpoints_at": [5, 10],
                 "bound": 0.1,
+                "opt": "SGD",
             },
             
-            "boundary_expansion" :{
+            "boundary_expanding" :{
                 
                 # Fan et al 2024
                 "lr": 1e-5, # original paper uses 1e-5, Fan et al lists 10^-5 which i dont think is the same
                 "num_epochs": 10,
+                "save_checkpoints_at": [5, 10],
+                "opt": "SGD",
             },
 
             "bad_teacher": {
@@ -81,6 +92,7 @@ base = {
                 # chundawat et al 2023 (original paper)
                 "lr": 1e-4, 
                 "num_epochs": 2,
+                "save_checkpoints_at": [1, 2],
                 "opt": "Adam",
 
                 # Kurmanji et al 2023
@@ -95,9 +107,10 @@ base = {
                 "opt": "Adam",
                 "weight_decay": 5e-4,
                 "lr": 5e-4,
-                "lr_decay_by": .1,
-                "sgda_epochs": 3,
-                "maxsteps": 2
+                # "lr_decay_by": .1, we're going to try cosine annealing, for consistency with our pretraining and retrain from scratch protocol
+                "num_epochs": 3,
+                "maxsteps": 2,
+                "save_checkpoints_at": [1, 2, 3],
             },
             }
         }
@@ -122,7 +135,7 @@ hyperparams = {
             "training": {
                 "pretrained_seed": 4, # 4 is real 
                 "retrained_from_scratch_seeds": {
-                    "class": 5,
+                    "class": 4,
                     "percents": -99
                     }
                 }

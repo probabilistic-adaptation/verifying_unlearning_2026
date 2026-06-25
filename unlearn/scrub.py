@@ -21,7 +21,7 @@ class DistillKL(nn.Module):
     def forward(self, y_s, y_t):
         p_s = F.log_softmax(y_s / self.T, dim=1)
         p_t = F.softmax(y_t / self.T, dim=1)
-        loss = F.kl_div(p_s, p_t, size_average=False) * (self.T ** 2) / y_s.shape[0]
+        loss = F.kl_div(p_s, p_t, reduction='sum') * (self.T ** 2) / y_s.shape[0]
         return loss
 
 
@@ -37,8 +37,14 @@ def train_distill(epoch, train_loader, model_s, model_t, criterion_cls, criterio
                   optimizer, split, gamma, alpha, print_freq,
                   device='cpu', w_and_b = True):
 
-    # I think we need to keep the student model in eval so we dont break batch norm stuff
-    model_s.eval()
+    # maximize: eval keeps BN stats from drifting toward the forget set distribution
+    # minimize: train mode lets BN running stats update alongside the weights as the
+    #           model recovers on retain data — without this, frozen BN stats mismatch
+    #           the post-maximize weights and produce near-random outputs
+    if split == "minimize":
+        model_s.train()
+    else:
+        model_s.eval()
     model_t.eval()
 
     losses_meter = AverageMeter()
@@ -52,28 +58,32 @@ def train_distill(epoch, train_loader, model_s, model_t, criterion_cls, criterio
         input = input.float().to(device)
         target = target.to(device)
 
+        # -------- forward pass -------- #
         logit_s = model_s(input)
         with torch.no_grad():
             logit_t = model_t(input)
 
-        loss_cls = criterion_cls(logit_s, target)
-        loss_div = criterion_div(logit_s, logit_t)
 
+        # -------- calculate losses -------- #
+        loss_div = criterion_div(logit_s, logit_t)
         if split == "minimize":
+            loss_cls = criterion_cls(logit_s, target)
             loss = gamma * loss_cls + alpha * loss_div
         elif split == "maximize":
             loss = -loss_div
 
         # loss = loss + param_dist(model_s, swa_model, smoothing)
 
-        
         if split == "minimize":
             acc1 = accuracy(logit_s, target, topk=(1,))
             losses_meter.update(loss.item(), input.size(0))
+            kd_losses_meter.update(loss_div.item(), input.size(0))
             top1_meter.update(acc1[0], input.size(0))
         elif split == "maximize":
             kd_losses_meter.update(loss.item(), input.size(0))
 
+
+        # -------- backward pass -------- #
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -82,23 +92,40 @@ def train_distill(epoch, train_loader, model_s, model_t, criterion_cls, criterio
 
         if i % print_freq == 0:
             end = time.time()
-            print(
-                f"Epoch: [{epoch}][{i}/{len(train_loader)}]\t"
-                f"Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f})\t"
-                f"Accuracy {top1_meter.val:.3f} ({top1_meter.avg:.3f})\t"
-                f"Time {end - start:.2f}"
-            )
+            if split == "minimize":
+                print(
+                    f"Epoch: [{epoch}][{i}/{len(train_loader)}]\t"
+                    f"Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f})\t"
+                    f"Accuracy {top1_meter.val:.3f} ({top1_meter.avg:.3f})\t"
+                    f"Time {end - start:.2f}"
+                )
+            else:
+                print(
+                    f"Epoch: [{epoch}][{i}/{len(train_loader)}]\t"
+                    f"KD Loss {kd_losses_meter.val:.4f} ({kd_losses_meter.avg:.4f})\t"
+                    f"Time {end - start:.2f}"
+                )
             sys.stdout.flush()
 
             if w_and_b:
-                wandb.log(
-                    {
-                        "train_loss": losses_meter.val,
-                        "train_loss_avg": losses_meter.avg,
-                        "train_acc": top1_meter.val,
-                        "train_acc_avg": top1_meter.avg,
-                    }
-                )
+                if split == "minimize":
+                    wandb.log(
+                        {
+                            "train_loss": losses_meter.val,
+                            "train_loss_avg": losses_meter.avg,
+                            "train_acc": top1_meter.val,
+                            "train_acc_avg": top1_meter.avg,
+                            "kd_loss": kd_losses_meter.val,
+                            "kd_loss_avg": kd_losses_meter.avg,
+                        }
+                    )
+                else:
+                    wandb.log(
+                        {
+                            "kd_loss": kd_losses_meter.val,
+                            "kd_loss_avg": kd_losses_meter.avg,
+                        }
+                    )
 
             start = time.time()
 
@@ -110,13 +137,13 @@ def train_distill(epoch, train_loader, model_s, model_t, criterion_cls, criterio
 
 
 def scrub(dataloaders, model_s, model_t, criterion_cls, criterion_div, optimizer, scheduler, print_freq, device, epoch, w_and_b = True,
-          gamma=0.99,
-          alpha=0.001,
+          gamma=0.99, # was .99 in original implementation
+          alpha=0.01, # was .001 in original implementation
           # beta=0,          # weight for swa averaging
           # smoothing=0.0,   # weight for swa anchor regularisation (param_dist)
           # sstart=10,       # epoch at which swa updates begin
           maxsteps=2,
-          sgda_epochs=3,
+          num_epochs=3,
           **kwargs):
     
     """
@@ -143,24 +170,26 @@ def scrub(dataloaders, model_s, model_t, criterion_cls, criterion_div, optimizer
     if str(device).startswith('cuda'):
         cudnn.benchmark = True
 
-    for epoch in range(1, sgda_epochs + 1):
+    # for epoch in range(1, num_epochs + 1):
 
-        maximize_loss = 0
-        if epoch <= maxsteps:
-            maximize_loss = train_distill(
-                epoch, forget_trainloader, model_s, model_t, criterion_cls, criterion_div,
-                optimizer, "maximize", gamma, alpha, print_freq, device, w_and_b = w_and_b)
+    maximize_loss = 0
+    if epoch <= maxsteps:
+        print("Performing max step...\n")
+        maximize_loss = train_distill(
+            epoch, forget_trainloader, model_s, model_t, criterion_cls, criterion_div,
+            optimizer, "maximize", gamma, alpha, print_freq, device, w_and_b = w_and_b)
 
-        train_acc, train_loss = train_distill(
-            epoch, retain_trainloader, model_s, model_t, criterion_cls, criterion_div,
-            optimizer, "minimize", gamma, alpha, print_freq, device, w_and_b = w_and_b)
+    print("Performing min step...\n")
+    train_acc, train_loss = train_distill(
+        epoch, retain_trainloader, model_s, model_t, criterion_cls, criterion_div,
+        optimizer, "minimize", gamma, alpha, print_freq, device, w_and_b = w_and_b)
 
-        # if epoch >= sstart:
-        #     swa_model.update_parameters(model_s)
+    # if epoch >= sstart:
+    #     swa_model.update_parameters(model_s)
 
-        print("maximize loss: {:.2f}\t minimize loss: {:.2f}\t train_acc: {}".format(
-            maximize_loss, train_loss, train_acc))
+    print("maximize loss: {:.2f}\t minimize loss: {:.2f}\t train_acc: {}".format(
+        maximize_loss, train_loss, train_acc))
 
-        scheduler.step()
+    scheduler.step()
 
     return model_s, train_acc

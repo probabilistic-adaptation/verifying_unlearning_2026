@@ -1,79 +1,79 @@
 {
     "acc": {
-        "forget": 98.72000008544921,
-        "retain": 99.76666664496528,
-        "test": 92.75000003662109
+        "forget": 77.82000002441406,
+        "retain": 99.85999997829862,
+        "test": 91.01999986572265
     },
     "loss": {
-        "forget": 0.03790548169016838,
-        "retain": 0.008925377289454143,
-        "test": 0.32715413880348204
+        "forget": 0.7633277814865113,
+        "retain": 0.005054948339859645,
+        "test": 0.524816455078125
     },
     "entropy": {
-        "forget": 0.05377428631782532,
-        "retain": 0.018480594640473524,
-        "test": 0.06358785510063171
+        "forget": 0.23470079267024993,
+        "retain": 0.009651621616217826,
+        "test": 0.05745787482261658
     },
     "m_entropy": {
-        "forget": 0.040411838561296466,
-        "retain": 0.007555988589757019,
-        "test": 0.5332231224060059
+        "forget": 1.2256080316543578,
+        "retain": 0.004777047725932466,
+        "test": 0.8839395499229431
     },
     "threshold_MIA": {
         "class": {
             "confidence": {
-                "retain_test_member": 0.9548888888888889,
+                "retain_test_member": 0.9586666666666667,
                 "forget_non_member": 0.0
             },
             "entropy": {
-                "retain_test_member": 0.9373333333333334,
+                "retain_test_member": 0.9442222222222222,
                 "forget_non_member": 0.0
             },
             "m_entropy": {
-                "retain_test_member": 0.9533333333333334,
+                "retain_test_member": 0.9528888888888889,
                 "forget_non_member": 0.0
             }
         },
         "no_class": {
             "confidence": {
-                "retain_test_member": 0.9512222222222222,
-                "forget_non_member": 0.1414
+                "retain_test_member": 0.9686666666666667,
+                "forget_non_member": 0.515
             },
             "entropy": {
-                "retain_test_member": 0.9244444444444444,
-                "forget_non_member": 0.1858
+                "retain_test_member": 0.9403333333333334,
+                "forget_non_member": 0.59
             },
             "m_entropy": {
-                "retain_test_member": 0.9545555555555556,
-                "forget_non_member": 0.1338
+                "retain_test_member": 0.9687777777777777,
+                "forget_non_member": 0.5142
             }
         },
         "correctness": {
-            "retain_test_member": 0.998,
-            "forget_non_member": 0.012800000000000034
+            "retain_test_member": 0.9986666666666667,
+            "forget_non_member": 0.2218
         }
     },
-    "ToW": 703.9705551960649,
+    "ToW": 0.2077739533864376,
     "outputs": {
         "retrained_vs_unlearned": {
             "forget": {
-                "absolute_distance": 1.9736146926879883,
-                "l2_distance": 1.347792148590088,
-                "JS_divergence": 0.6761261820793152
+                "absolute_distance": 1.7259578704833984,
+                "l2_distance": 1.1669563055038452,
+                "JS_divergence": 0.5697944164276123
             },
             "retain": {
-                "absolute_distance": 1.779120683670044
+                "absolute_distance": 1.7775940895080566
             },
             "test": {
-                "absolute_distance": 0.28623485565185547
+                "absolute_distance": 0.2342800348997116
             },
             "forget_test_avg": {
-                "KL_divergence": 12.552987098693848
+                "KL_divergence": 12.918231010437012
             }
         },
         "unlearned": {
             "forget_vs_test": {
-                "wasserstein_distance": 0.2898383769122488
+                "wasserstein_distance": 0.46209290388950935
             }
         }
     },
@@ -83,6 +83,6 @@
     "forget_set_type": "class",
     "unlearning_item": 5,
     "method": "NegGrad_plus",
-    "epoch_duration": 17.11101222038269,
-    "total_unlearning_time_up_to_now": 86754.62698936462
+    "epoch_duration": 17.964457035064697,
+    "total_unlearning_time_up_to_now": 90497.25461006165
 }
