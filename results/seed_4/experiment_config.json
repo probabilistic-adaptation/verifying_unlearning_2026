@@ -26,7 +26,7 @@
     },
     "unlearning": {
         "methods": [
-            "boundary_shrink"
+            "scrub"
         ],
         "FT": {
             "print_freq": 8,
@@ -115,7 +115,9 @@
                 1,
                 2,
                 3
-            ]
+            ],
+            "forget_batch_size": 512,
+            "retain_batch_size": 128
         }
     },
     "GRAND_SEED": 4

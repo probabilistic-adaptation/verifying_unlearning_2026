@@ -358,9 +358,20 @@ def do_unlearning(
             # model_s = copy.deepcopy(model)
             model.to(device) # this IS the "student model"
             model_t.to(device)
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=method_hyperparams["num_epochs"])
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(opt, milestones=[1], gamma=0.1)
             criterion_cls = nn.CrossEntropyLoss()
             criterion_div = DistillKL(T = 4) # This T is hardcoded from the original paper, and also used in Di et al 2024
+
+            # rebuild forget/retain loaders with scrub-specific batch sizes
+            for key, bs_key in [("forget", "forget_batch_size"), ("retain", "retain_batch_size")]:
+                old = dataloaders[key]
+                dataloaders[key] = DataLoader(
+                    old.dataset,
+                    batch_size=method_hyperparams[bs_key],
+                    shuffle=isinstance(old.sampler, torch.utils.data.RandomSampler),
+                    num_workers=old.num_workers,
+                    pin_memory=old.pin_memory,
+                )
 
     else:
 

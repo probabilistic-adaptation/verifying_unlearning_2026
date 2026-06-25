@@ -107,10 +107,12 @@ base = {
                 "opt": "Adam",
                 "weight_decay": 5e-4,
                 "lr": 5e-4,
-                # "lr_decay_by": .1, we're going to try cosine annealing, for consistency with our pretraining and retrain from scratch protocol
-                "num_epochs": 3,
+                # "lr_decay_by": .1, we're going to try cosine annealing, for consistency with our pretraining and retrain from scratch protocol # UPDATE, i am worried cosine annealing isnt good, gonna cut by .1 after epoch 1 and see what happens
+                "num_epochs": 3, # original paper gives 3, but im finding retain and test acc dont improve enough by the end
                 "maxsteps": 2,
                 "save_checkpoints_at": [1, 2, 3],
+                "forget_batch_size": 512,
+                "retain_batch_size": 128,
             },
             }
         }
