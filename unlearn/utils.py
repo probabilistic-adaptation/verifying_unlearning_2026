@@ -235,6 +235,7 @@ from .NegGrad_plus import NegGrad_plus
 from .boundary_sh import boundary_shrink
 from .bad_teacher import bad_teacher, BadTeacherUnLearningData
 from .scrub import scrub, DistillKL
+from .UNSIR import UNSIR, UNSIR_noise, UNSIR_noise_train, UNSIR_create_noisy_loader
 
 def raw():
     pass
@@ -282,6 +283,8 @@ def get_unlearn_method(name):
         return bad_teacher
     elif name == "scrub":
         return scrub
+    elif name == "UNSIR":
+        return UNSIR
     # elif name == "RL_proximal":
     #     return RL_proximal
     else:
@@ -350,6 +353,50 @@ def do_unlearning(
         full_trained_teacher.eval() # teachers are in eval mode, student is in train
         unlearning_teacher.eval()
 
+    if method == "UNSIR":
+        
+        # Infer noise tensor shape from a sample in the forget loader
+        sample_batch = next(iter(dataloaders["forget"]))
+        sample_img = sample_batch[0][0]
+        noise_batch_size = method_hyperparams.get("noise_batch_size", 128)
+        C, H, W = sample_img.shape
+
+        # Train the noise module to maximally confuse the model on the forget class
+        noise = UNSIR_noise(noise_batch_size, C, H, W).to(device)
+        print("Training UNSIR noise...\n")
+        noise = UNSIR_noise_train(
+            noise, model,
+            forget_class_label=unlearning_item,
+            num_epochs=method_hyperparams.get("noise_train_epochs", 5),
+            noise_batch_size=noise_batch_size,
+            device=device
+        )
+
+        retain_dataset = dataloaders["retain"].dataset
+        targets = np.array(retain_dataset.targets)
+        rng = np.random.RandomState(seed)
+        retain_indices = []
+        for cls in np.unique(targets):
+            cls_indices = np.where(targets == cls)[0]
+            chosen = rng.choice(cls_indices, size=min(1000, len(cls_indices)), replace=False)
+            retain_indices.extend(chosen)
+        retain_samples = [retain_dataset[i] for i in retain_indices]
+
+        # Create the mixed noisy+retain loader used during the impair step
+        noisy_loader = UNSIR_create_noisy_loader(
+            noise=noise,
+            forget_class_label=unlearning_item,
+            retain_samples=retain_samples,
+            batch_size=dataloaders["retain"].batch_size,
+            num_noise_batches=method_hyperparams.get("num_noise_batches", 20),
+            num_workers = dataloaders["retain"].num_workers,
+            pin_memory = dataloaders["retain"].pin_memory
+        )
+
+        dataloaders["UNSIR_noisy_loader"] = noisy_loader
+
+        criterion = nn.CrossEntropyLoss()
+
     if method == "scrub":
 
             # set up scrub criterion and opt
@@ -401,16 +448,17 @@ def do_unlearning(
         # ... do one round of the unlearning method
         print(f"---------- Epoch {k}\n")
 
-        # ... --- the args for bad teacher and other knowledge distillation methods are different
+        # selectively set model to train or eval depending on method
         if method == "bad_teacher":
-            # we ONLY set to train on knowledge distillation unlearning
-            # MAYBE COME BACK TO THIS
             model.train()
             model, _ = method_func(unlearning_loader, model, unlearning_teacher, full_trained_teacher, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
         
         elif method == "scrub":
             model.eval()
             model, _ = method_func(dataloaders, model, model_t, criterion_cls, criterion_div, opt, scheduler, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
+        elif method == "UNSIR":
+            model.train()
+            model, _ = method_func(dataloaders, model, criterion, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
         else:
             model.eval()
             model, _ = method_func(dataloaders, model, criterion, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)

@@ -114,6 +114,23 @@ base = {
                 "forget_batch_size": 512,
                 "retain_batch_size": 128,
             },
+
+            "UNSIR": {
+                "print_freq": 8,
+                
+                # Tarun et al 2024 (original paper)
+                "noise_batch_size": 256, # original is 256
+                "num_noise_batches": 20,
+                "noise_train_epochs": 5,
+                # whole retain set (they report better retain acc with more retain data, and all other methods use full retain loader)
+                "opt": "Adam",
+                "lr": 0, # this is just a dummy so that Adam can be initialized - the lr is eventually overwritten by either of the ones below
+                "lr_impair": .01, # they also report good results with .01, original is .02
+                "lr_repair": .01, # originally fixed to 0.01 in their paper
+                "impair_epochs": 1, # they report 1 epoch of impair is enough
+                "num_epochs": 10, # they report better retain acc for 2 epochs instead of 1, with no demonstrable increase at 3
+                "save_checkpoints_at": [1, 10],
+            }
             }
         }
     }
@@ -135,10 +152,24 @@ hyperparams = {
 
         "ResNet": deep_update(base['ResNet'], {
             "training": {
-                "pretrained_seed": 4, # 4 is real 
+                "pretrained_seed": 4,
                 "retrained_from_scratch_seeds": {
                     "class": 4,
-                    "percents": -99
+                    "percents": 5
+                    }
+                }
+            }),
+
+        "AllCNN": deep_update(base['ResNet'], {
+            "training": {
+                "num_epochs": 75, # test acc on 100 is not significantly higher than test acc on 75
+                "learning_rate": 1e-3,
+                "weight_decay": 1e-4,
+                "batch_print_freq": 5,
+                "pretrained_seed": 11,
+                "retrained_from_scratch_seeds": {
+                    "class": 11,
+                    "percents": 12
                     }
                 }
             })

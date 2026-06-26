@@ -26,10 +26,11 @@ hyperparams_and_results = {
 
     # Tarun et al did not pretrain their original models for very long, all accuracy scores are commensurately lower (likely dont want to replicate their method)
 
+    Tarun et al 2024,           Retrain,                                                                        0                   78.32
     Tarun et al 2024,           FT,                                                                             24.55               78.11
     Tarun et al 2024,           GA,                                                                             7.44                66.67
     Tarun et al 2024,           Fisher,                                                                         0.00                10.85
-    Tarun et al 2024,           UNSIR,                                                                          0.00                71.06
+    Tarun et al 2024,           UNSIR,                                                                          0.00 ± 0.0          71.06 ± 1.13
 
     # they include a nifty table with all their chosen hyperparams (thank you)
 

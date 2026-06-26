@@ -1,0 +1,26 @@
+{
+    "description": "Pre-training - AllCNN, CIFAR10",
+    "device": "cuda",
+    "model_class": "AllCNN",
+    "data": {
+        "dataset": "CIFAR10",
+        "num_classes": 10,
+        "batch_size": 1024,
+        "num_workers": 4
+    },
+    "training": {
+        "num_epochs": [
+            1,
+            20,
+            30,
+            50,
+            75,
+            100
+        ],
+        "num_runs": 3,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_print_freq": 12
+    },
+    "GRAND_SEED": 11
+}

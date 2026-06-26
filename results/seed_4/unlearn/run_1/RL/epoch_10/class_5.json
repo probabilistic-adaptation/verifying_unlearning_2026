@@ -1,79 +1,79 @@
 {
     "acc": {
-        "forget": 14.900000018310546,
-        "retain": 99.83777776692709,
-        "test": 85.57999986572266
+        "forget": 11.500000021362304,
+        "retain": 99.80666665581597,
+        "test": 85.3799999633789
     },
     "loss": {
-        "forget": 1.8445066986083984,
-        "retain": 0.008804277168711027,
-        "test": 0.4737033030986786
+        "forget": 1.8961396013259888,
+        "retain": 0.010218734678294924,
+        "test": 0.4704093306541443
     },
     "entropy": {
-        "forget": 1.7467116216659546,
-        "retain": 0.027248273900151252,
-        "test": 0.23083290095329284
+        "forget": 1.758439154624939,
+        "retain": 0.03149408050146368,
+        "test": 0.2395790668964386
     },
     "m_entropy": {
-        "forget": 1.7502259813308716,
-        "retain": 0.005129653402169546,
-        "test": 0.618045557975769
+        "forget": 1.8038066495895386,
+        "retain": 0.0060387998142176205,
+        "test": 0.6065479494094849
     },
     "threshold_MIA": {
         "class": {
             "confidence": {
-                "retain_test_member": 0.9585555555555556,
+                "retain_test_member": 0.9594444444444444,
                 "forget_non_member": 0.0
             },
             "entropy": {
-                "retain_test_member": 0.9334444444444444,
+                "retain_test_member": 0.9452222222222222,
                 "forget_non_member": 0.0
             },
             "m_entropy": {
-                "retain_test_member": 0.9521111111111111,
+                "retain_test_member": 0.9678888888888889,
                 "forget_non_member": 0.0
             }
         },
         "no_class": {
             "confidence": {
-                "retain_test_member": 0.9686666666666667,
+                "retain_test_member": 0.9691111111111111,
                 "forget_non_member": 1.0
             },
             "entropy": {
-                "retain_test_member": 0.9468888888888889,
-                "forget_non_member": 0.9998
+                "retain_test_member": 0.9477777777777778,
+                "forget_non_member": 1.0
             },
             "m_entropy": {
-                "retain_test_member": 0.9618888888888889,
+                "retain_test_member": 0.9716666666666667,
                 "forget_non_member": 1.0
             }
         },
         "correctness": {
-            "retain_test_member": 0.9982222222222222,
-            "forget_non_member": 0.851
+            "retain_test_member": 0.9985555555555555,
+            "forget_non_member": 0.885
         }
     },
-    "ToW": 0.843270280151124,
+    "ToW": 0.8776000422610333,
     "outputs": {
         "retrained_vs_unlearned": {
             "forget": {
-                "absolute_distance": 1.6186760663986206,
-                "l2_distance": 0.873744547367096,
-                "JS_divergence": 0.44878968596458435
+                "absolute_distance": 1.625137448310852,
+                "l2_distance": 0.8741618394851685,
+                "JS_divergence": 0.4510417580604553
             },
             "retain": {
-                "absolute_distance": 1.7768964767456055
+                "absolute_distance": 1.7778149843215942
             },
             "test": {
-                "absolute_distance": 0.24351315200328827
+                "absolute_distance": 0.24800419807434082
             },
             "forget_test_avg": {
-                "KL_divergence": 10.249185562133789
+                "KL_divergence": 10.137436866760254
             }
         },
         "unlearned": {
             "forget_vs_test": {
-                "wasserstein_distance": 1.6111109690743834
+                "wasserstein_distance": 1.6593210985585838
             }
         }
     },
@@ -83,6 +83,6 @@
     "forget_set_type": "class",
     "unlearning_item": 5,
     "method": "RL",
-    "epoch_duration": 10.504362106323242,
-    "total_unlearning_time_up_to_now": 104224.85589981079
+    "epoch_duration": 10.064449787139893,
+    "total_unlearning_time_up_to_now": 100819.50116157532
 }
