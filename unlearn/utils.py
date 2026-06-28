@@ -221,7 +221,7 @@ from .GA import GA
 from .RL import RL, setup_RL_loader
 from .FT import FT, FT_l1
 from .NegGrad_plus import NegGrad_plus
-# from .fisher import fisher, fisher_new
+from .fisher import fisher
 # from .retrain import retrain
 # from .impl import load_unlearn_checkpoint, save_unlearn_checkpoint
 # from .Wfisher import Wfisher
@@ -257,8 +257,8 @@ def get_unlearn_method(name):
         return FT_l1
     elif name == "NegGrad_plus":
         return NegGrad_plus
-    # elif name == "fisher":
-    #     return fisher
+    elif name == "fisher":
+        return fisher
     # elif name == "retrain":
     #     return retrain
     # elif name == "fisher_new":
