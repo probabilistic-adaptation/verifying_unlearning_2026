@@ -64,6 +64,14 @@ base = {
                 "save_checkpoints_at": [5, 10],
                 },
             
+            "fisher": {
+                "opt": "SGD",
+                "lr": 0.01,       # unused — fisher is one-shot noise injection
+                "num_epochs": 1,
+                "save_checkpoints_at": [1],
+                "lambda": 5e-7,
+            },
+
             "SalUn": {},
 
             "boundary_shrink": {

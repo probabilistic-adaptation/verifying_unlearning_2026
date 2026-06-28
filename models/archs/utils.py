@@ -4,13 +4,13 @@ from models.archs.VGG import vgg11_bn
 from models.archs.CIFARNET import CIFARNET
 from models.archs.ResNet import resnet18
 from models.archs.AllCNN import AllCNN
+from models.archs.ViT import ViT
 
 
 
 def init_model(model_class, num_classes = None, checkpoint_path=None):
 
     if model_class == "ConvNet":
-
         model = ConvNet()
 
     elif model_class == "VGG":
@@ -22,6 +22,8 @@ def init_model(model_class, num_classes = None, checkpoint_path=None):
         model = resnet18(num_classes = num_classes)
     elif model_class == "AllCNN":
         model = AllCNN()
+    elif model_class == "ViT":
+        model = ViT(num_classes=num_classes)
 
     else:
         raise NotImplementedError(f"{model_class} is not an implemented model_class")
