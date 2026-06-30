@@ -137,8 +137,8 @@ def train_distill(epoch, train_loader, model_s, model_t, criterion_cls, criterio
 
 
 def scrub(dataloaders, model_s, model_t, criterion_cls, criterion_div, optimizer, scheduler, print_freq, device, epoch, w_and_b = True,
-          gamma=0.99, # was .99 in original implementation
-          alpha=0.001, # was .001 in original implementation
+          gamma=1, # was .99 in original implementation
+          alpha=0.5, # was .001 in original implementation
           # beta=0,          # weight for swa averaging
           # smoothing=0.0,   # weight for swa anchor regularisation (param_dist)
           # sstart=10,       # epoch at which swa updates begin

@@ -1,11 +1,11 @@
 {
-    "description": "First official run - ResNet18, CIFAR10, class unlearning",
-    "device": "cpu",
+    "description": "Figuring out SCRUB problems",
+    "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "class",
-    "num_runs": 1,
-    "measure_base_results": true,
-    "measure_retrain_results": true,
+    "num_runs": 3,
+    "measure_base_results": false,
+    "measure_retrain_results": false,
     "data": {
         "dataset": "CIFAR10",
         "num_classes": 10,
@@ -21,12 +21,13 @@
         "pretrained_seed": 4,
         "retrained_from_scratch_seeds": {
             "class": 4,
-            "percents": 5
+            "random": 5,
+            "random_uniform": 6
         }
     },
     "unlearning": {
         "methods": [
-            "FT"
+            "scrub"
         ],
         "FT": {
             "print_freq": 8,
@@ -74,7 +75,6 @@
             ]
         },
         "fisher": {
-            "opt": "SGD",
             "lr": 0.01,
             "num_epochs": 1,
             "save_checkpoints_at": [
@@ -118,15 +118,22 @@
             "opt": "Adam",
             "weight_decay": 0.0005,
             "lr": 0.0005,
-            "num_epochs": 3,
-            "maxsteps": 2,
+            "num_epochs": 10,
+            "maxsteps": 1,
             "save_checkpoints_at": [
-                1,
-                2,
-                3
+                3,
+                7,
+                10
             ],
             "forget_batch_size": 512,
-            "retain_batch_size": 128
+            "retain_batch_size": 128,
+            "T": 2,
+            "lr_decay_epochs": [
+                5,
+                8,
+                9
+            ],
+            "lr_decay_rate": 0.1
         },
         "UNSIR": {
             "print_freq": 8,

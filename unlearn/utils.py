@@ -323,13 +323,13 @@ def do_unlearning(
     method_func = get_unlearn_method(method)
     print(f"Executing unlearning with {method}...\n")
 
-    # establish optimizer first, since we need it in all forks of the if-else later
-    if method_hyperparams["opt"] == "Adam":
+    # establish optimizer first, since we need it in all forks of the if-else later (except Fisher)
+    # the logic is:
+    # --- if opt = Adam, instantiate Adam
+    # --- if opt doesnt exist or equals SGD, then instantiate SGD (i.e. it is our default)
+    if method_hyperparams.get("opt", "SGD") == "Adam":
         opt = torch.optim.Adam(model.parameters(), lr=method_hyperparams["lr"], weight_decay=method_hyperparams.get("weight_decay", 0))
-    elif method_hyperparams["opt"] == "SGD":
-        opt = torch.optim.SGD(model.parameters(), lr=method_hyperparams["lr"], weight_decay=method_hyperparams.get("weight_decay", 0))
     else:
-        # default to SGD 
         opt = torch.optim.SGD(model.parameters(), lr=method_hyperparams["lr"], weight_decay=method_hyperparams.get("weight_decay", 0))
 
         
@@ -405,9 +405,9 @@ def do_unlearning(
             # model_s = copy.deepcopy(model)
             model.to(device) # this IS the "student model"
             model_t.to(device)
-            scheduler = torch.optim.lr_scheduler.MultiStepLR(opt, milestones=[1], gamma=0.1)
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(opt, milestones=method_hyperparams['lr_decay_epochs'], gamma=method_hyperparams['lr_decay_rate'])
             criterion_cls = nn.CrossEntropyLoss()
-            criterion_div = DistillKL(T = 4) # This T is hardcoded from the original paper, and also used in Di et al 2024
+            criterion_div = DistillKL(T = method_hyperparams['T']) # T = 4 in the original paper, and also used in Di et al 2024, but we might want to tune
 
             # rebuild forget/retain loaders with scrub-specific batch sizes
             for key, bs_key in [("forget", "forget_batch_size"), ("retain", "retain_batch_size")]:

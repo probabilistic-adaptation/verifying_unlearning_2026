@@ -64,11 +64,6 @@ def fisher(dataloaders, model, criterion, opt, epoch, device, w_and_b=True, **kw
             # the original authors do not clamp the value of the noise, revisit this later
             noise = torch.sqrt(lam / fisher_approximation[i]).clamp(max=1e-3) * torch.empty_like(parameter).normal_(0, 1)
 
-            # this is a weird line
-            # supposedly, the last layer has 10 output units, and we want to add more noise to it
-            # but fails if any other layer also happens to have 10 output units
-            # I'm going to remove it for now, unless something seems broken later
-            # noise = noise * 10 if parameter.shape[-1] == 10 else noise
             parameter.add_(noise)
     return model, 0
 

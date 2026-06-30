@@ -1,0 +1,88 @@
+{
+    "acc": {
+        "forget": 9.879999994659423,
+        "retain": 83.84888884819878,
+        "test": 71.70999987792969
+    },
+    "loss": {
+        "forget": 6.569857280731201,
+        "retain": 0.6733205299165513,
+        "test": 2.0197114639282225
+    },
+    "entropy": {
+        "forget": 0.6731520873069763,
+        "retain": 0.17519279623031617,
+        "test": 0.1759475066423416
+    },
+    "m_entropy": {
+        "forget": 8.487610354614258,
+        "retain": 1.0395503571404352,
+        "test": 3.0645543807983397
+    },
+    "threshold_MIA": {
+        "class": {
+            "confidence": {
+                "retain_test_member": 0.929,
+                "forget_non_member": 0.0
+            },
+            "entropy": {
+                "retain_test_member": 0.9655555555555555,
+                "forget_non_member": 0.0
+            },
+            "m_entropy": {
+                "retain_test_member": 0.9296666666666666,
+                "forget_non_member": 0.0
+            }
+        },
+        "no_class": {
+            "confidence": {
+                "retain_test_member": 0.9104444444444444,
+                "forget_non_member": 0.8156
+            },
+            "entropy": {
+                "retain_test_member": 0.8387777777777777,
+                "forget_non_member": 0.6094
+            },
+            "m_entropy": {
+                "retain_test_member": 0.8892222222222222,
+                "forget_non_member": 0.8444
+            }
+        },
+        "correctness": {
+            "retain_test_member": 0.8451111111111111,
+            "forget_non_member": 0.9012
+        }
+    },
+    "ToW": 0.6637609317467138,
+    "outputs": {
+        "retrained_vs_unlearned": {
+            "forget": {
+                "absolute_distance": 1.8122050762176514,
+                "l2_distance": 1.1369595527648926,
+                "JS_divergence": 0.5896307826042175
+            },
+            "retain": {
+                "absolute_distance": 1.7756134271621704
+            },
+            "test": {
+                "absolute_distance": 0.537111222743988
+            },
+            "forget_test_avg": {
+                "KL_divergence": 11.415812492370605
+            }
+        },
+        "unlearned": {
+            "forget_vs_test": {
+                "wasserstein_distance": 4.588878677905104
+            }
+        }
+    },
+    "type": "unlearn",
+    "epoch": 10,
+    "run": 3,
+    "forget_set_type": "class",
+    "unlearning_item": 5,
+    "method": "boundary_shrink",
+    "epoch_duration": 2.000647783279419,
+    "total_unlearning_time_up_to_now": 19681.795835494995
+}

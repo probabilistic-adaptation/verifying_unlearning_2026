@@ -65,8 +65,7 @@ base = {
                 },
             
             "fisher": {
-                "opt": "SGD",
-                "lr": 0.01,       # unused — fisher is one-shot noise injection
+                "lr": 0.01,
                 "num_epochs": 1,
                 "save_checkpoints_at": [1],
                 "lambda": 5e-7,
@@ -116,11 +115,14 @@ base = {
                 "weight_decay": 5e-4,
                 "lr": 5e-4,
                 # "lr_decay_by": .1, we're going to try cosine annealing, for consistency with our pretraining and retrain from scratch protocol # UPDATE, i am worried cosine annealing isnt good, gonna cut by .1 after epoch 1 and see what happens
-                "num_epochs": 3, # original paper gives 3, but im finding retain and test acc dont improve enough by the end
-                "maxsteps": 2,
-                "save_checkpoints_at": [1, 2, 3],
+                "num_epochs": 10, # original paper gives 3, but im finding retain and test acc dont improve enough by the end
+                "maxsteps": 1,
+                "save_checkpoints_at": [5, 10],
                 "forget_batch_size": 512,
                 "retain_batch_size": 128,
+                'T': 2,
+                'lr_decay_epochs': [5, 8, 9],
+                'lr_decay_rate': 0.1
             },
 
             "UNSIR": {
@@ -154,7 +156,8 @@ hyperparams = {
         "num_workers": 4,
         "items_to_unlearn": {
             "class": 5,
-            "percents": .2,
+            "random": .1,
+            "random_uniform": .1,
         },
         
 
@@ -163,22 +166,33 @@ hyperparams = {
                 "pretrained_seed": 4,
                 "retrained_from_scratch_seeds": {
                     "class": 4,
-                    "percents": 5
+                    "random": 5,
+                    "random_uniform": 6
                     }
                 }
             }),
 
         "AllCNN": deep_update(base['ResNet'], {
             "training": {
-                "num_epochs": 75, # test acc on 100 is not significantly higher than test acc on 75
+                "num_epochs": 100, # test acc on 100 is not significantly higher than test acc on 75
                 "learning_rate": 1e-3,
                 "weight_decay": 1e-4,
-                "batch_print_freq": 5,
+                "batch_print_freq": 12,
                 "pretrained_seed": 11,
                 "retrained_from_scratch_seeds": {
                     "class": 11,
-                    "percents": 12
+                    "random": 12,
+                    "random_uniform": 13
                     }
+                },
+                "unlearning": {
+                    "GA": {
+                        "lr": 7e-5, # anything higher than this results in calamitous model utility, any lower (1e-4 from jia et al 2024) and the model doesnt unlearn anything within 5 epochs
+                    },
+                    "NegGrad_plus": {
+                        "alpha": 0.9999 # this is all that changed from Golatkar et al (smaller values induces calamitous model failure)
+                        },
+
                 }
             })
 
@@ -189,7 +203,11 @@ hyperparams = {
         "batch_size": 512,
         "num_workers": 4,
         "class_to_unlearn": 5,
-        "percents_to_unlearn": .2,
+        "items_to_unlearn": {
+            "class": 5,
+            "random": .1,
+            "random_uniform": .1,
+        },
 
         "ResNet": deep_update(base['ResNet'], {
             "training": {

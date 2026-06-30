@@ -271,6 +271,9 @@ class black_box_benchmarks(object):
                     )
                 )
             )
+
+        # we insert a print new line here, since the above functions print a bunch of text, and we want to separate from the next block (whatever it is)
+        print("\n")
         return ret
 
 
