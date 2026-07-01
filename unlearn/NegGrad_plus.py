@@ -39,9 +39,14 @@ def train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, de
         del_output = model(forget_input)
         r_loss = criterion(output, target)
         f_loss = criterion(del_output, forget_target)
+        # clamp GA loss at chance level for stability
+        # chance_loss = torch.tensor(-torch.log(torch.tensor(1.0 / 10)), device=device)
 
-        loss = alpha*r_loss - (1-alpha)*f_loss
-
+        # # chance level is too high - just need to prevent the model from calamitously failing
+        # f_loss = torch.clamp(criterion(del_output, forget_target), max=torch.tensor(-10, device=device))
+        
+        
+        loss = alpha * r_loss - (1 - alpha) * f_loss
         
         prec1 = accuracy(output.data, target)[0]
         losses_meter.update(loss.item(), retain_input.size(0))

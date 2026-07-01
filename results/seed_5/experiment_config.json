@@ -1,5 +1,5 @@
 {
-    "description": "Adding updated SCRUB params to official seed 5 - resnet, CIFAR10, random unlearning",
+    "description": "Continuing official seed 5 - ResNet, CIFAR10, random unlearning",
     "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "random",
@@ -27,7 +27,8 @@
     },
     "unlearning": {
         "methods": [
-            "scrub"
+            "GA",
+            "NegGrad_plus"
         ],
         "FT": {
             "print_freq": 8,

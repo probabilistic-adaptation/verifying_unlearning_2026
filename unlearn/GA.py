@@ -27,6 +27,11 @@ def GA(dataloaders, model, criterion, optimizer, epoch, print_freq, device, w_an
         output_clean = model(image)
         loss = -criterion(output_clean, target)
 
+        # clamp GA loss at chance level for stability
+        chance_loss = torch.tensor(-torch.log(torch.tensor(1.0 / 10)), device=loss.device)
+        # loss = torch.clamp(loss, min=-chance_loss)
+        loss = torch.clamp(loss, min=-5)
+
         optimizer.zero_grad()
         loss.backward()
 

@@ -187,10 +187,11 @@ hyperparams = {
                 },
                 "unlearning": {
                     "GA": {
-                        "lr": 7e-5, # anything higher than this results in calamitous model utility, any lower (1e-4 from jia et al 2024) and the model doesnt unlearn anything within 5 epochs
+                        "lr": 1e-4, # 7e-5, # anything higher than this results in calamitous model utility, any lower (1e-4 from jia et al 2024) and the model doesnt unlearn anything within 5 epochs
                     },
                     "NegGrad_plus": {
-                        "alpha": 0.9999 # this is all that changed from Golatkar et al (smaller values induces calamitous model failure)
+                        "lr": .01,
+                        "alpha": 0.99 # this is all that changed from Golatkar et al (smaller values induces calamitous model failure)
                         },
 
                 }

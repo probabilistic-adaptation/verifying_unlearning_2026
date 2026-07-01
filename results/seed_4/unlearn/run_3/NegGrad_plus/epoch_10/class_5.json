@@ -1,79 +1,79 @@
 {
     "acc": {
-        "forget": 1.3199999992370606,
-        "retain": 99.75333332248263,
-        "test": 84.76999991455078
+        "forget": 1.1999999996185302,
+        "retain": 99.77999996744792,
+        "test": 84.83999991455079
     },
     "loss": {
-        "forget": 14.182209199523927,
-        "retain": 0.008105980125649108,
-        "test": 1.9541826889038085
+        "forget": 14.168350559997558,
+        "retain": 0.00744549380838871,
+        "test": 1.9621789684295654
     },
     "entropy": {
-        "forget": 0.17548200221061708,
-        "retain": 0.012974824163648818,
-        "test": 0.054744040906429293
+        "forget": 0.18834738743305207,
+        "retain": 0.012860943677359156,
+        "test": 0.055217549258470534
     },
     "m_entropy": {
-        "forget": 22.639641696166994,
-        "retain": 0.008384240756597784,
-        "test": 3.4416813301086426
+        "forget": 22.01567593383789,
+        "retain": 0.0073155971409546005,
+        "test": 3.4216494941711426
     },
     "threshold_MIA": {
         "class": {
             "confidence": {
-                "retain_test_member": 0.9614444444444444,
+                "retain_test_member": 0.9608888888888889,
                 "forget_non_member": 0.0
             },
             "entropy": {
-                "retain_test_member": 0.9447777777777778,
+                "retain_test_member": 0.9384444444444444,
                 "forget_non_member": 0.0
             },
             "m_entropy": {
-                "retain_test_member": 0.9624444444444444,
+                "retain_test_member": 0.954,
                 "forget_non_member": 0.0
             }
         },
         "no_class": {
             "confidence": {
-                "retain_test_member": 0.9673333333333334,
-                "forget_non_member": 0.9956
+                "retain_test_member": 0.967,
+                "forget_non_member": 0.9966
             },
             "entropy": {
-                "retain_test_member": 0.933,
-                "forget_non_member": 0.4556
+                "retain_test_member": 0.9368888888888889,
+                "forget_non_member": 0.4604
             },
             "m_entropy": {
-                "retain_test_member": 0.9685555555555555,
+                "retain_test_member": 0.971,
                 "forget_non_member": 0.9956
             }
         },
         "correctness": {
-            "retain_test_member": 0.9977777777777778,
-            "forget_non_member": 0.9868
+            "retain_test_member": 0.998,
+            "forget_non_member": 0.988
         }
     },
-    "ToW": 0.9840388545567047,
+    "ToW": 0.9860359469987439,
     "outputs": {
         "retrained_vs_unlearned": {
             "forget": {
-                "absolute_distance": 0.8002533912658691,
-                "l2_distance": 0.5377628207206726,
-                "JS_divergence": 0.23897410929203033
+                "absolute_distance": 0.7945379614830017,
+                "l2_distance": 0.5334811210632324,
+                "JS_divergence": 0.23563963174819946
             },
             "retain": {
-                "absolute_distance": 1.7750962972640991
+                "absolute_distance": 1.7782374620437622
             },
             "test": {
-                "absolute_distance": 0.13910573720932007
+                "absolute_distance": 0.1346346139907837
             },
             "forget_test_avg": {
-                "KL_divergence": 13.296259880065918
+                "KL_divergence": 13.317192077636719
             }
         },
         "unlearned": {
             "forget_vs_test": {
-                "wasserstein_distance": 12.255775539912173
+                "wasserstein_distance": 12.23230112484029
             }
         }
     },
@@ -83,6 +83,6 @@
     "forget_set_type": "class",
     "unlearning_item": 5,
     "method": "NegGrad_plus",
-    "epoch_duration": 17.50708246231079,
-    "total_unlearning_time_up_to_now": 174964.4844532013
+    "epoch_duration": 17.887437105178833,
+    "total_unlearning_time_up_to_now": 179574.2700099945
 }

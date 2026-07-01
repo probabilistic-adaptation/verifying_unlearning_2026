@@ -1,5 +1,5 @@
 {
-    "description": "Rough draft - AllCNN, CIFAR10, class unlearning",
+    "description": "Continuing official seed 11 - AllCNN, CIFAR10, class unlearning",
     "device": "cuda",
     "model_class": "AllCNN",
     "unlearning_type": "class",
@@ -21,12 +21,19 @@
         "pretrained_seed": 11,
         "retrained_from_scratch_seeds": {
             "class": 11,
-            "percents": 12
+            "random": 12,
+            "random_uniform": 13
         }
     },
     "unlearning": {
         "methods": [
-            "UNSIR"
+            "boundary_shrink",
+            "bad_teacher",
+            "scrub",
+            "UNSIR",
+            "GA",
+            "NegGrad_plus",
+            "RL"
         ],
         "FT": {
             "print_freq": 8,
@@ -41,7 +48,7 @@
         },
         "GA": {
             "print_freq": 1,
-            "lr": 7e-05,
+            "lr": 0.0001,
             "opt": "SGD",
             "weight_decay": 0.0005,
             "num_epochs": 5,
@@ -60,7 +67,7 @@
                 5,
                 10
             ],
-            "alpha": 0.9999
+            "alpha": 0.99
         },
         "RL": {
             "print_freq": 8,
@@ -117,15 +124,21 @@
             "opt": "Adam",
             "weight_decay": 0.0005,
             "lr": 0.0005,
-            "num_epochs": 3,
-            "maxsteps": 2,
+            "num_epochs": 10,
+            "maxsteps": 1,
             "save_checkpoints_at": [
-                1,
-                2,
-                3
+                5,
+                10
             ],
             "forget_batch_size": 512,
-            "retain_batch_size": 128
+            "retain_batch_size": 128,
+            "T": 2,
+            "lr_decay_epochs": [
+                5,
+                8,
+                9
+            ],
+            "lr_decay_rate": 0.1
         },
         "UNSIR": {
             "print_freq": 8,
