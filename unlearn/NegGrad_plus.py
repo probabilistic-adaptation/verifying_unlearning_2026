@@ -23,6 +23,8 @@ def train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, de
     retain_loader = dataloaders["retain"]
     forget_loader = dataloaders["forget"]
 
+    r_losses_meter = AverageMeter()
+    f_losses_meter = AverageMeter()
     losses_meter = AverageMeter()
     top1_meter = AverageMeter()
     start = time.time()
@@ -49,6 +51,8 @@ def train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, de
         loss = alpha * r_loss - (1 - alpha) * f_loss
         
         prec1 = accuracy(output.data, target)[0]
+        r_losses_meter.update(r_loss.item(), retain_input.size(0))
+        f_losses_meter.update(f_loss.item(), retain_input.size(0))
         losses_meter.update(loss.item(), retain_input.size(0))
         top1_meter.update(prec1.item(), retain_input.size(0))
 
@@ -65,6 +69,8 @@ def train_negrad(dataloaders, model, criterion, optimizer, epoch, print_freq, de
             print(
                 f"Epoch: [{epoch}][{idx}/{len(retain_loader)}]\t"
                 f"Loss {losses_meter.val:.4f} ({losses_meter.avg:.4f})\t"
+                f"R-loss {r_losses_meter.val:.4f} ({r_losses_meter.avg:.4f})\t"
+                f"F-loss {f_losses_meter.val:.4f} ({f_losses_meter.avg:.4f})\t"
                 f"Accuracy {top1_meter.val:.3f} ({top1_meter.avg:.3f})\t"
                 f"Time {end - start:.2f}"
             )
