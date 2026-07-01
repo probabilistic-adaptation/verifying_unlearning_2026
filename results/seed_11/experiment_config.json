@@ -1,5 +1,5 @@
 {
-    "description": "Continuing official seed 11 - AllCNN, CIFAR10, class unlearning",
+    "description": "Adding updated NegGrad_plus to seed 11",
     "device": "cuda",
     "model_class": "AllCNN",
     "unlearning_type": "class",
@@ -27,13 +27,7 @@
     },
     "unlearning": {
         "methods": [
-            "boundary_shrink",
-            "bad_teacher",
-            "scrub",
-            "UNSIR",
-            "GA",
-            "NegGrad_plus",
-            "RL"
+            "NegGrad_plus"
         ],
         "FT": {
             "print_freq": 8,
@@ -58,16 +52,16 @@
             ]
         },
         "NegGrad_plus": {
-            "print_freq": 8,
+            "print_freq": 3,
             "lr": 0.01,
             "opt": "SGD",
             "weight_decay": 0.0005,
-            "num_epochs": 10,
+            "num_epochs": 2,
             "save_checkpoints_at": [
-                5,
-                10
+                1,
+                2
             ],
-            "alpha": 0.99
+            "alpha": 0.999
         },
         "RL": {
             "print_freq": 8,

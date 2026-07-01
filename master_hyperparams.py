@@ -193,8 +193,8 @@ hyperparams = {
                         "print_freq": 3,
                         "lr": .01,
                         "alpha": 0.999, # this is all that changed from Golatkar et al (smaller values induces calamitous model failure)
-                        "num_epochs": 3,
-                        "save_checkpoints_at": [1, 2, 3],
+                        "num_epochs": 2,
+                        "save_checkpoints_at": [1, 2],
                         },
 
                 }
