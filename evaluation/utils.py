@@ -8,8 +8,9 @@ from trainer.val import validate
 from evaluation.MIA import MIA
 from evaluation.SVC_MIA import SVC_MIA
 
-from evaluation.distances import l2_distance, JSDiv, ZRFScore, absolute_distance, kl_div_metric
-from scipy.stats import wasserstein_distance
+from evaluation.distances import l2_distance, JSDiv, absolute_distance, kl_div_metric, pred_distribution_difference, normalized_confusion_distance
+from evaluation.weight_differences import weight_distance
+from scipy.stats import wasserstein_distance, ks_2samp
 
 
 def forget_retain_test_validation(model, dataloaders, device, criterion):
@@ -127,56 +128,87 @@ def measure_solo_metrics(model, dataloaders, device):
 
 
 
-def measure_solo_and_comparison_metrics(model, dataloaders, device, reference_out_path = None, main_name = "unlearned", reference_name = "retrained"):
+def measure_solo_and_comparison_metrics(model, dataloaders, device, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None):
     """
     Measure ALL unlearning metrics, including those which require a reference model for comparison
     """
 
-    # do the first pass of solo metrics on your main model (usually the unleaned one)
+    # do the first pass of solo metrics on your main model (usually the unlearned one)
     main_results, main_out = measure_solo_metrics(model, dataloaders, device)
     # load your reference out object (usually retrain from scratch)
-    reference_out = torch.load(reference_out_path)
+    retrain_out = torch.load(retrain_out_path)
+    # ensure bad teacher is in eval mode
+    bad_teacher.eval()
+    # load original model out object
+    base_out = torch.load(base_out_path)
 
     # Tug-of-War metric
-    da_forget = abs(main_results["acc"]["forget"] - reference_out["forget"]["avg_acc"]) / 100
-    da_retain = abs(main_results["acc"]["retain"] - reference_out["retain"]["avg_acc"]) / 100
-    da_test = abs(main_results["acc"]["test"] - reference_out["test"]["avg_acc"]) / 100
+    da_forget = abs(main_results["acc"]["forget"] - retrain_out["forget"]["avg_acc"]) / 100
+    da_retain = abs(main_results["acc"]["retain"] - retrain_out["retain"]["avg_acc"]) / 100
+    da_test = abs(main_results["acc"]["test"] - retrain_out["test"]["avg_acc"]) / 100
 
     ToW = (1 - da_forget) * (1 - da_retain) * (1 - da_test)
     main_results.update({
         "ToW": ToW
     })
 
-    print(f"Evaluating differences/distances between {main_name} and {reference_name} outputs ...\n")
+    print(f"Evaluating differences/distances between unlearned, retrain, and bad_teacher outputs ...\n")
     
+    # get bad teacher outputs for ZRF
+    bad_teacher_forget_out = validate(dataloaders["forget"], bad_teacher, criterion = nn.CrossEntropyLoss(), print_freq = 100_000, device = device, w_and_b=False)
+
+
+    # getting predictions (useful for a couple metrics)
+    unlearned_preds = main_out['forget']['probs'].argmax(dim = 1)
+    retrain_preds = retrain_out['forget']['probs'].argmax(dim = 1)
+    base_preds = base_out['forget']['probs'].argmax(dim = 1)
+    true_forget_labels = main_out["forget"]["targets"]
+
     main_results.update({ 
         
         "outputs": {
             
-            f"{reference_name}_vs_{main_name}": {
+            f"retrain_vs_unlearned": {
                 "forget": {
-                    "absolute_distance": absolute_distance( main_out['forget']['probs'], reference_out['forget']['probs'] ),
-                    "l2_distance": l2_distance( main_out['forget']['probs'], reference_out['forget']['probs']),
-                    "JS_divergence": JSDiv( main_out['forget']['probs'], reference_out['forget']['probs']),
+                    "absolute_distance": absolute_distance( main_out['forget']['probs'], retrain_out['forget']['probs'] ),
+                    "l2_distance": l2_distance( main_out['forget']['probs'], retrain_out['forget']['probs']),
+                    "JS_divergence": JSDiv( main_out['forget']['probs'], retrain_out['forget']['probs']),
+                    "prediction_distribution_diff": pred_distribution_difference(unlearned_preds, retrain_preds),
+                    "normalized_confusion_distance": normalized_confusion_distance(unlearned_preds, retrain_preds, base_preds, true_forget_labels, num_classes = num_classes)
                     },
                 "retain": {
-                    "absolute_distance": absolute_distance( main_out['retain']['probs'], reference_out['retain']['probs'] ),
+                    "absolute_distance": absolute_distance( main_out['retain']['probs'], retrain_out['retain']['probs'] ),
                     },
                 "test":{
-                    "absolute_distance": absolute_distance( main_out['test']['probs'], reference_out['test']['probs'] ),
+                    "absolute_distance": absolute_distance( main_out['test']['probs'], retrain_out['test']['probs'] ),
                     },
                 "forget_test_avg": {
-                    "KL_divergence": kl_div_metric( reference_out['forget']['probs'], main_out['forget']['probs'], reference_out['retain']['probs'], main_out['retain']['probs'] )
+                    "KL_divergence": kl_div_metric( retrain_out['forget']['probs'], main_out['forget']['probs'], retrain_out['retain']['probs'], main_out['retain']['probs'] )
                     }
                 },
-            f"{main_name}": {
+            f"bad_teacher_vs_unlearned": {
+                "forget": {
+                    "ZRF_score": 1 - JSDiv( main_out['forget']['probs'], bad_teacher_forget_out['probs']),
+                    },
+                },
+            f"unlearned": {
                 "forget_vs_test": {
-                    "wasserstein_distance": wasserstein_distance(main_out['forget']["losses"], main_out['test']["losses"])
+                    "wasserstein_distance": wasserstein_distance(main_out['forget']["losses"], main_out['test']["losses"]),
+                    "ks_statistics": ks_2samp(main_out['forget']["losses"], main_out['test']["losses"], method = 'asymp')[0] # only need first item, second item is the p-value
                     }
                 }
             }
-        })
 
+        "weight_differences": {
+            "retrain_vs_unlearned": {
+                "l2_distance": weight_distance(model, retrain_model, type = "l2", layer_wise = False)
+            },
+            "original_vs_unlearned": {
+                "l2_distance": weight_distance(model, base_model, type = "l2", layer_wise = False)
+            }
+
+        }
+        })
 
     return main_results, main_out
     

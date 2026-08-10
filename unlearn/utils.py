@@ -310,7 +310,11 @@ def do_unlearning(
         checkpoint_subfolder,
         blank_model,
         seed,
-        retrain_out_path = None
+        retrain_out_path = None,
+        base_out_path = None,
+        num_classes = None,
+        retrain_model = None,
+        base_model = None 
         ):
     """
     Router for executing unlearning
@@ -349,9 +353,9 @@ def do_unlearning(
             )
 
         full_trained_teacher = copy.deepcopy(model).to(device) # `model` here is the student model, which at this time is a copy of the base model, i.e. the full_trained teacher, so we can init the good teacher as such
-        unlearning_teacher = blank_model.to(device) # we need the unlearning teacher to be the same model architecture, initialized in the same way as the full_trained_teacher, but not trained (we pass it as an argument for convenience)
+        blank_model.to(device) # we need the unlearning teacher to be the same model architecture, initialized in the same way as the full_trained_teacher, but not trained (we pass it as an argument for convenience)
         full_trained_teacher.eval() # teachers are in eval mode, student is in train
-        unlearning_teacher.eval()
+        blank_model.eval()
 
     if method == "UNSIR":
         
@@ -451,7 +455,7 @@ def do_unlearning(
         # selectively set model to train or eval depending on method
         if method == "bad_teacher":
             model.train()
-            model, _ = method_func(unlearning_loader, model, unlearning_teacher, full_trained_teacher, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
+            model, _ = method_func(unlearning_loader, model, blank_model, full_trained_teacher, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
         
         elif method == "scrub":
             model.eval()
@@ -484,7 +488,12 @@ def do_unlearning(
                 model = model, 
                 dataloaders = dataloaders, 
                 device = device,
-                reference_out_path = retrain_out_path
+                reference_out_path = retrain_out_path,
+                bad_teacher = blank_model,
+                base_out_path = base_out_path,
+                num_classes = num_classes,
+                retrain_model = ,
+                base_model = 
                 )
             # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({
