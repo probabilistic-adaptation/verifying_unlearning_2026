@@ -5,7 +5,7 @@ import torch.nn as nn
 from trainer.val import validate
 
 # MIA (threshold function + SVC)
-from evaluation.MIA import MIA
+from evaluation.MIA import MIA, entropy_threshold_MIA
 from evaluation.SVC_MIA import SVC_MIA
 
 from evaluation.distances import l2_distance, JSDiv, absolute_distance, kl_div_metric, pred_distribution_difference, normalized_confusion_distance
@@ -35,7 +35,7 @@ def forget_retain_test_validation(model, dataloaders, device, criterion):
     return out
 
 
-def measure_solo_metrics(model, dataloaders, device):
+def measure_solo_metrics(model, dataloaders, device, seed):
     """
     Measure all the unlearning metrics which do NOT require a reference model for comparison
     """
@@ -73,22 +73,30 @@ def measure_solo_metrics(model, dataloaders, device):
     # Both MIAs recompute entropy and m-entropy, which is a bit of wasted computation,
     # could refactor that later
     # at least this way, they do not have to pass through the data loader for forget and test again
-    print("Running through `retain_one` and `retain_two` for MIAs...\n")
-    retain_one_out = validate(dataloaders["retain_one"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
-    retain_two_out = validate(dataloaders["retain_two"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
-    main_out.update({
-        "retain_one": retain_one_out,
-        "retain_two": retain_two_out,
-    })
+    # print("Running through `retain_one` and `retain_two` for MIAs...\n")
+    print("Gathering data for MIAs...\n")
+    num_forget_samples = len(main_out["forget"]["probs"][0]) # first dimension gives you number of samples, second dim is the num of classes
+    g = torch.Generator().manual_seed(seed)
+    retain_probs = main_out["retain"]["probs"]
+    test_probs = main_out["test"]["probs"]
+    MIA_member_train_probs = retain_probs[torch.randperm(retain_probs.shape[0], generator=g)[:num_forget_samples]]
+    chosen_test_probs = test_probs[torch.randperm(test_probs.shape[0], generator=g)[:(2*num_forget_samples)]] # need twice as many so we can cut it in half
+    MIA_nonmember_train_probs = chosen_test_probs[:num_forget_samples]
+    MIA_nonmember_test_probs = chosen_test_probs[num_forget_samples:]
+
+    # MIA_member_train_out = validate(dataloaders["MIA_member_train"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
+    # # retain_two_out = validate(dataloaders["retain_two"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
+    # main_out.update({
+    #     "retain_one": retain_one_out,
+    #     "retain_two": retain_two_out,
+    # })
     
     print("Performing threshold MIA attack...\n")
-    attack_results = MIA(
-        shadow_train_inputs = (retain_one_out["probs"].numpy(), retain_one_out["targets"].numpy()),
-        shadow_test_inputs = (main_out["test"]["probs"].numpy(), main_out["test"]["targets"].numpy()),
-        target_train_inputs = (retain_two_out["probs"].numpy(), retain_two_out["targets"].numpy()),
-        target_test_inputs = (main_out["forget"]["probs"].numpy(), main_out["forget"]["targets"].numpy()),
-        model = model,
-        device = device
+    attack_results = entropy_threshold_MIA(
+        train_member_probs = MIA_member_train_probs, 
+        train_non_member_probs = MIA_nonmember_train_probs, 
+        forget_probs = main_out['forget']["probs"], 
+        audit_non_member_probs = MIA_nonmember_test_probs
         )
     
     # attack results should look something like this:
@@ -128,13 +136,13 @@ def measure_solo_metrics(model, dataloaders, device):
 
 
 
-def measure_solo_and_comparison_metrics(model, dataloaders, device, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None):
+def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None):
     """
     Measure ALL unlearning metrics, including those which require a reference model for comparison
     """
 
     # do the first pass of solo metrics on your main model (usually the unlearned one)
-    main_results, main_out = measure_solo_metrics(model, dataloaders, device)
+    main_results, main_out = measure_solo_metrics(model, dataloaders, device, seed = seed)
     # load your reference out object (usually retrain from scratch)
     retrain_out = torch.load(retrain_out_path)
     # ensure bad teacher is in eval mode
@@ -165,7 +173,7 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, retrain_out_
     true_forget_labels = main_out["forget"]["targets"]
 
     main_results.update({ 
-        
+
         "outputs": {
             
             f"retrain_vs_unlearned": {
@@ -196,19 +204,18 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, retrain_out_
                     "wasserstein_distance": wasserstein_distance(main_out['forget']["losses"], main_out['test']["losses"]),
                     "ks_statistics": ks_2samp(main_out['forget']["losses"], main_out['test']["losses"], method = 'asymp')[0] # only need first item, second item is the p-value
                     }
-                }
-            }
+                    }
+                },
 
         "weight_differences": {
             "retrain_vs_unlearned": {
                 "l2_distance": weight_distance(model, retrain_model, type = "l2", layer_wise = False)
-            },
+                },
             "original_vs_unlearned": {
                 "l2_distance": weight_distance(model, base_model, type = "l2", layer_wise = False)
+                }
             }
-
-        }
-        })
+            })
 
     return main_results, main_out
     

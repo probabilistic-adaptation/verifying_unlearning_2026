@@ -1,7 +1,8 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, roc_auc_score, f1_score
+from evaluation.entropy import entropy
 
 class black_box_benchmarks(object):
     def __init__(
@@ -103,7 +104,7 @@ class black_box_benchmarks(object):
     def _thre_setting(self, tr_values, te_values):
         # If no member samples exist for this class (e.g. class-based unlearning where the
         # forgotten class is absent from retain), we cannot calibrate a threshold. Return -inf
-        # so all samples of this class are treated as members (the conservative default).
+        # so all samples of this class are treated as members (the conservative default).F
         # Should only kick in on class forgetting
         if len(tr_values.flatten()) == 0 or len(te_values.flatten()) == 0:
             return -np.inf
@@ -311,3 +312,48 @@ def MIA(
         num_classes=10,
     )
     return BBB._mem_inf_benchmarks()
+
+
+def entropy_threshold_MIA(train_member_probs, train_non_member_probs, forget_probs, audit_non_member_probs):
+    """
+    Threshold-based MIA using (negative) prediction entropy as the sole attack feature.
+
+    A single global threshold is calibrated on `train_member_probs`/`train_non_member_probs`
+    (e.g. subsets of retain/test). The attack is then audited against `forget_probs` (true
+    members, label 1) vs `audit_non_member_probs` (true non-members, label 0) - a successful
+    unlearning should make the attack fail on the forget set.
+    """
+    train_member_score = -entropy(train_member_probs).detach().cpu().numpy()
+    train_non_member_score = -entropy(train_non_member_probs).detach().cpu().numpy()
+    forget_score = -entropy(forget_probs).detach().cpu().numpy()
+    audit_non_member_score = -entropy(audit_non_member_probs).detach().cpu().numpy()
+
+    # calibrate the threshold that maximizes balanced accuracy on the training split
+    y_train = np.concatenate([np.ones_like(train_member_score), np.zeros_like(train_non_member_score)])
+    scores_train = np.concatenate([train_member_score, train_non_member_score])
+    fpr, tpr, thresholds = roc_curve(y_train, scores_train)
+    balanced_acc = 0.5 * (tpr + (1 - fpr))
+    # skip index 0: roc_curve prepends a sentinel threshold that argmax would return by default
+    thre = thresholds[np.argmax(balanced_acc[1:]) + 1]
+
+    y_audit = np.concatenate([np.ones_like(forget_score), np.zeros_like(audit_non_member_score)])
+    audit_scores = np.concatenate([forget_score, audit_non_member_score])
+    audit_preds = (audit_scores >= thre).astype(int)
+
+    # min-max normalize scores against the training split's range, to use as a pseudo membership-probability
+    score_min, score_max = scores_train.min(), scores_train.max()
+    audit_member_prob = np.clip((audit_scores - score_min) / (score_max - score_min + 1e-12), 0, 1)
+
+    n_forget = len(forget_score)
+    forget_preds = audit_preds[:n_forget]
+    forget_member_prob = audit_member_prob[:n_forget]
+
+    return {
+        "efficacy": np.mean(forget_preds == 0).item(),
+        "attack_accuracy": np.mean(audit_preds == y_audit).item(),
+        "auc": roc_auc_score(y_audit, audit_scores),
+        "f1": f1_score(y_audit, audit_preds),
+        "avg_member_probability_forget": np.mean(forget_member_prob).item(),
+        "n_forget_pred_member": int(np.sum(forget_preds == 1)),
+        "n_forget_pred_non_member": int(np.sum(forget_preds == 0)),
+    }

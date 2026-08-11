@@ -488,12 +488,13 @@ def do_unlearning(
                 model = model, 
                 dataloaders = dataloaders, 
                 device = device,
+                seed = seed, # we need the random seed to ground the choice of random draws for the MIA training and test data
                 reference_out_path = retrain_out_path,
                 bad_teacher = blank_model,
                 base_out_path = base_out_path,
                 num_classes = num_classes,
-                retrain_model = ,
-                base_model = 
+                retrain_model = retrain_model,
+                base_model = base_model
                 )
             # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({
