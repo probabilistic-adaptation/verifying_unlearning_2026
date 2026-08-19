@@ -1,8 +1,9 @@
 import copy
 
 import torch
-from torch.autograd import grad
+# from torch.autograd import grad
 from tqdm import tqdm
+from torch.func import functional_call, vmap, grad
 
 
 def fisher_information_matrix(model, train_dl, device):
@@ -45,6 +46,48 @@ def fisher_information_matrix(model, train_dl, device):
         fisher_approximation[i] = fisher_approximation[i] / total
 
     return fisher_approximation
+
+
+
+
+
+def fisher_information_matrix(model, train_dl, device):
+    model.eval()
+
+    params = {k: v.detach() for k, v in model.named_parameters()}
+    buffers = {k: v.detach() for k, v in model.named_buffers()}
+
+    fisher_approximation = {k: torch.zeros_like(v) for k, v in params.items()}
+    total = 0
+
+    def compute_log_prob(params, buffers, sample, label):
+        # functional_call expects a batch dim, so add one back for a single sample
+        sample = sample.unsqueeze(0)
+        logits = functional_call(model, (params, buffers), (sample,))
+        log_probs = torch.log_softmax(logits, dim=-1)
+        return log_probs[0, label]
+
+    # grad w.r.t. the first arg (params); vmap batches over dim 0 of sample/label,
+    # broadcasting params/buffers (in_dims=None) across the batch
+    per_sample_grad = vmap(grad(compute_log_prob), in_dims=(None, None, 0, 0))
+
+    for data, label in tqdm(train_dl):
+        data = data.to(device)
+        label = label.to(device)
+        real_batch = data.shape[0]
+
+        grads = per_sample_grad(params, buffers, data, label)
+
+        for k in fisher_approximation:
+            fisher_approximation[k] += grads[k].pow(2).sum(dim=0)
+
+        total += real_batch
+
+    for k in fisher_approximation:
+        fisher_approximation[k] /= total + 1e-8 # to prevent underflow
+
+    # return in the same order/type as model.parameters(), if you need a list
+    return [fisher_approximation[name] for name, _ in model.named_parameters()]
 
 
 def fisher(dataloaders, model, criterion, opt, epoch, device, w_and_b=True, **kwargs):
