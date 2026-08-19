@@ -363,7 +363,7 @@ def do_unlearning(
         sample_batch = next(iter(dataloaders["forget"]))
         sample_img = sample_batch[0][0]
         noise_batch_size = method_hyperparams.get("noise_batch_size", 128)
-        C, H, W = sample_img.shape
+        C, H, W = sample_img.shapeFalse
 
         # Train the noise module to maximally confuse the model on the forget class
         noise = UNSIR_noise(noise_batch_size, C, H, W).to(device)
@@ -443,6 +443,12 @@ def do_unlearning(
     # init total unlearning time
     total_unlearning_time_ms = 0
 
+    # only populated when method == "fisher" -- the bound_info dict from unlearn.fisher.fisher(),
+    # needed for the *exact* Sigma_o in fisher_information_bound (evaluation/residual_information.py).
+    # every other method leaves this None, in which case that metric falls back to a Laplace
+    # approximation of Sigma_o instead.
+    bound_info = None
+
     # For each epoch ...
     for k in range(1, method_hyperparams["num_epochs"]+1):
 
@@ -463,6 +469,9 @@ def do_unlearning(
         elif method == "UNSIR":
             model.train()
             model, _ = method_func(dataloaders, model, criterion, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
+        elif method == "fisher":
+            model.eval()
+            model, _, bound_info = method_func(dataloaders, model, criterion, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
         else:
             model.eval()
             model, _ = method_func(dataloaders, model, criterion, opt, epoch=k, device=device, w_and_b=w_and_b, **method_hyperparams)
@@ -485,16 +494,18 @@ def do_unlearning(
             # ... run some evaluations, and add metadata
             # print(f"[do_unlearning] before measure_unlearning_metrics: model.training = {model.training}")
             results, unlearned_out = measure_solo_and_comparison_metrics(
-                model = model, 
-                dataloaders = dataloaders, 
+                model = model,
+                dataloaders = dataloaders,
                 device = device,
                 seed = seed, # we need the random seed to ground the choice of random draws for the MIA training and test data
-                reference_out_path = retrain_out_path,
+                retrain_out_path = retrain_out_path,
                 bad_teacher = blank_model,
                 base_out_path = base_out_path,
                 num_classes = num_classes,
                 retrain_model = retrain_model,
-                base_model = base_model
+                base_model = base_model,
+                compute_fisher = True,
+                bound_info = bound_info
                 )
             # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({

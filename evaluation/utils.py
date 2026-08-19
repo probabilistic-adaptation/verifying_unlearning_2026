@@ -10,21 +10,23 @@ from evaluation.SVC_MIA import SVC_MIA
 
 from evaluation.distances import l2_distance, JSDiv, absolute_distance, kl_div_metric, pred_distribution_difference, normalized_confusion_distance
 from evaluation.weight_differences import weight_distance
+from evaluation.residual_information import fisher_information_bound, information_score, efficacy, efficacy_upper_bound
 from scipy.stats import wasserstein_distance, ks_2samp
 
 
-def forget_retain_test_validation(model, dataloaders, device, criterion):
+def forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher = False):
     
     # we deliberately set `print_freq` very high so we dont actually print anything
 
     print("Evaluating forget set metrics...\n")
-    forget_out = validate(dataloaders["forget"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
+    forget_out = validate(dataloaders["forget"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = compute_fisher)
 
     print("Evaluating retain set metrics...\n")
-    retain_out = validate(dataloaders["retain"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
+    retain_out = validate(dataloaders["retain"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = compute_fisher)
 
     print("Evaluating test set metrics...\n")
-    test_out = validate(dataloaders["test"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
+    # as of now, no metrics require computing FIM over the test set, so we hard-code False
+    test_out = validate(dataloaders["test"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = False)
 
     out = {
         "forget": forget_out,
@@ -35,7 +37,7 @@ def forget_retain_test_validation(model, dataloaders, device, criterion):
     return out
 
 
-def measure_solo_metrics(model, dataloaders, device, seed):
+def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = False):
     """
     Measure all the unlearning metrics which do NOT require a reference model for comparison
     """
@@ -44,7 +46,7 @@ def measure_solo_metrics(model, dataloaders, device, seed):
     model.eval() # just overwhelmingly confirm that we are in eval mode here, regardless of whether the model was passed in eval mode
     
     # add in metrics, as you'd like
-    main_out = forget_retain_test_validation(model, dataloaders, device, criterion)
+    main_out = forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher=compute_fisher)
 
     results = {
         "acc": {
@@ -136,13 +138,24 @@ def measure_solo_metrics(model, dataloaders, device, seed):
 
 
 
-def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None):
+def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None, compute_fisher = False, bound_info = None):
     """
     Measure ALL unlearning metrics, including those which require a reference model for comparison
+
+    compute_fisher: if True, also compute the residual-information metrics in
+    evaluation/residual_information.py (information_score, efficacy, efficacy_upper_bound, and --
+    if `bound_info` is also given -- fisher_information_bound). This requires retrain_out_path to
+    point to a `retrained_out.pth` that was itself generated with compute_fisher=True (i.e. it has
+    a "fisher_diag" entry under "retain"), since fisher_information_bound needs the retrained
+    model's Fisher information over the retain set.
+
+    bound_info: the dict returned by unlearn.fisher.fisher() (only produced when `model` was
+    unlearned via Fisher scrubbing). Needed for fisher_information_bound; the other residual
+    information metrics don't use it.
     """
 
     # do the first pass of solo metrics on your main model (usually the unlearned one)
-    main_results, main_out = measure_solo_metrics(model, dataloaders, device, seed = seed)
+    main_results, main_out = measure_solo_metrics(model, dataloaders, device, seed = seed, compute_fisher = compute_fisher)
     # load your reference out object (usually retrain from scratch)
     retrain_out = torch.load(retrain_out_path)
     # ensure bad teacher is in eval mode
@@ -214,8 +227,43 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, retrai
             "original_vs_unlearned": {
                 "l2_distance": weight_distance(model, base_model, type = "l2", layer_wise = False)
                 }
-            }
+            },
             })
+
+    if compute_fisher:
+        forget_fisher_diag = main_out["forget"]["fisher_diag"]
+        forget_grad_norm = main_out["forget"]["grad_norm"]
+
+        residual_information = {
+            "information_score": information_score(forget_fisher_diag),
+            "efficacy": efficacy(forget_fisher_diag),
+            "efficacy_upper_bound": efficacy_upper_bound(forget_grad_norm),
+        }
+
+        retrain_fisher_diag = retrain_out.get("retain", {}).get("fisher_diag")
+        if retrain_fisher_diag is not None:
+            if bound_info is not None:
+                # Fisher-scrubbed model: Sigma_o is the *exact* injected noise variance
+                w_o = bound_info["pre_scrub_state_dict"]
+                sigma_o = bound_info["noise_variance"]
+            else:
+                # any other unlearning method: no explicit noise term, so approximate Sigma_o the
+                # same way Sigma_r is approximated -- via the retain-set Fisher at the model's own
+                # weights, already computed above as part of this same compute_fisher=True pass
+                epsilon = 1e-8
+                named_params = list(model.named_parameters())
+                retain_fisher_diag = main_out["retain"]["fisher_diag"]
+                w_o = {name: param.detach() for name, param in named_params}
+                sigma_o = {
+                    name: 1.0 / (retain_fisher_diag[i] + epsilon)
+                    for i, (name, _) in enumerate(named_params)
+                }
+
+            residual_information["fisher_information_bound"] = fisher_information_bound(
+                w_o, sigma_o, retrain_model, retrain_fisher_diag
+            )
+
+        main_results["residual_information"] = residual_information
 
     return main_results, main_out
     

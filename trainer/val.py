@@ -5,10 +5,24 @@ from evaluation.entropy import entropy, m_entropy
 from evaluation.accuracy import accuracy
 import wandb
 import torch.nn.functional as F
+from torch.func import functional_call, vmap, grad
 
-def validate(val_loader, model, criterion, print_freq, device, w_and_b = True):
+def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, compute_fisher = False):
     """
     Run evaluation
+
+    If compute_fisher=True, also accumulate over val_loader (in the same pass, no extra loader
+    iteration needed):
+      - "fisher_diag": the diagonal empirical Fisher Information Matrix, per parameter element
+        (the same quantity unlearn.fisher.fisher_information_matrix returns).
+      - "grad_norm": the L2 norm of the gradient of the mean cross-entropy loss over the whole
+        val_loader (Becker & Liebig, "Evaluating Machine Unlearning via Epistemic Uncertainty",
+        Eq. 10-11), i.e. what evaluation.residual_information.efficacy_upper_bound needs.
+    Both come from the same per-sample gradients of log p(y|x) w.r.t. the parameters: the FIM is
+    their sum of squares, the loss gradient is (the negative of) their sum -- so getting both costs
+    only one extra (vmap'd) forward/backward per batch, on top of the no_grad one already done for
+    accuracy/entropy. This is off by default since most call sites (e.g. per-epoch training
+    validation) don't need it and it isn't free.
     """
     losses = []
     probs = []
@@ -23,6 +37,27 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True):
 
     # switch to evaluate mode
     model.eval()
+
+    if compute_fisher:
+        params = {k: v.detach() for k, v in model.named_parameters()}
+        buffers = {k: v.detach() for k, v in model.named_buffers()}
+        fisher_diag = {k: torch.zeros_like(v) for k, v in params.items()}
+        grad_sum = {k: torch.zeros_like(v) for k, v in params.items()}
+        total_fisher = 0
+
+        def compute_log_prob(params, buffers, sample, label):
+            # functional_call expects a batch dim, so add one back for a single sample
+            sample = sample.unsqueeze(0)
+            logits = functional_call(model, (params, buffers), (sample,))
+            log_probs = torch.log_softmax(logits, dim=-1)
+            # indexing log_probs[0, label] directly has no vmap batching rule when label is
+            # itself a vmap+grad-transformed tensor -- nll_loss does, and is equivalent here
+            # since it's a batch of 1 (mean reduction over one element = that element)
+            return -torch.nn.functional.nll_loss(log_probs, label.unsqueeze(0))
+
+        # grad w.r.t. the first arg (params); vmap batches over dim 0 of sample/label,
+        # broadcasting params/buffers (in_dims=None) across the batch
+        per_sample_grad = vmap(grad(compute_log_prob), in_dims=(None, None, 0, 0))
 
     for i, (image, target) in enumerate(val_loader):
         image = image.to(device)
@@ -59,7 +94,12 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True):
         entropies.append( entr.cpu() )
         m_entropies.append( m_entr.cpu() )
 
-
+        if compute_fisher:
+            sample_grads = per_sample_grad(params, buffers, image, target)
+            for k in fisher_diag:
+                fisher_diag[k] += sample_grads[k].pow(2).sum(dim=0)
+                grad_sum[k] += sample_grads[k].sum(dim=0)
+            total_fisher += image.shape[0]
 
         if i % print_freq == 0:
             print(
@@ -86,5 +126,14 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True):
         "entropies": torch.cat(entropies),
         "m_entropies": torch.cat(m_entropies)
     }
+
+    if compute_fisher:
+        epsilon = 1e-8
+        named_params = list(model.named_parameters())
+
+        out["fisher_diag"] = [fisher_diag[name] / (total_fisher + epsilon) for name, _ in named_params]
+        out["grad_norm"] = torch.linalg.norm(
+            torch.cat([(grad_sum[name] / (total_fisher + epsilon)).flatten() for name, _ in named_params])
+        ).item()
 
     return out

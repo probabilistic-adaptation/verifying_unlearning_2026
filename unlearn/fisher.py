@@ -65,7 +65,10 @@ def fisher_information_matrix(model, train_dl, device):
         sample = sample.unsqueeze(0)
         logits = functional_call(model, (params, buffers), (sample,))
         log_probs = torch.log_softmax(logits, dim=-1)
-        return log_probs[0, label]
+        # indexing log_probs[0, label] directly has no vmap batching rule when label is
+        # itself a vmap+grad-transformed tensor -- nll_loss does, and is equivalent here
+        # since it's a batch of 1 (mean reduction over one element = that element)
+        return -torch.nn.functional.nll_loss(log_probs, label.unsqueeze(0))
 
     # grad w.r.t. the first arg (params); vmap batches over dim 0 of sample/label,
     # broadcasting params/buffers (in_dims=None) across the batch
@@ -96,19 +99,42 @@ def fisher(dataloaders, model, criterion, opt, epoch, device, w_and_b=True, **kw
     Based on retain
 
     we leave a bunch of stale args in the function def_n for now, so as to maintain the pipeline structure
+
+    Also returns a `bound_info` dict with everything needed to later compute the information-remaining
+    bound of Golatkar et al. 2020a ("Eternal Sunshine of the Spotless Net"), Corollary 1 / Eq. 5,
+    specialized to the Fisher-forgetting scrubbing function of Eq. 8 (h(w) = w, i.e. no Newton step):
+
+        bound = (1/2) * sum_i (w0_i - w'_i)^2 / Sigma_i
+
+    where w0 are these pre-scrub weights, w' are the weights of a model trained from scratch on the
+    retain set, and Sigma is the per-parameter variance of the noise actually injected below (i.e. after
+    the clamp). See evaluation/information_bound.py for the function that consumes this dict.
     """
     lam = kwargs['lambda']
     retain_loader = dataloaders["retain"]
 
     fisher_approximation = fisher_information_matrix(model, retain_loader, device)
+    pre_scrub_state_dict = {name: param.detach().clone() for name, param in model.named_parameters()}
+    noise_variance = {}
+
     with torch.no_grad():
-        for i, parameter in enumerate(model.parameters()):
+        for i, (name, parameter) in enumerate(model.named_parameters()):
 
             # the original authors do not clamp the value of the noise, revisit this later
-            noise = torch.sqrt(lam / fisher_approximation[i]).clamp(max=1e-3) * torch.empty_like(parameter).normal_(0, 1)
+            noise_std = torch.sqrt(lam / fisher_approximation[i]).clamp(max=1e-3)
+            noise_variance[name] = noise_std.pow(2)
 
+            noise = noise_std * torch.empty_like(parameter).normal_(0, 1)
             parameter.add_(noise)
-    return model, 0
+
+    bound_info = {
+        "pre_scrub_state_dict": pre_scrub_state_dict,
+        "noise_variance": noise_variance,
+        "fisher_diag": {name: fisher_approximation[i] for i, (name, _) in enumerate(model.named_parameters())},
+        "lambda": lam,
+    }
+
+    return model, 0, bound_info
 
 
 # def hessian(dataset, model, loss_fn, args):
