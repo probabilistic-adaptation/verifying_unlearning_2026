@@ -1,5 +1,6 @@
 import copy
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import ConcatDataset, DataLoader
@@ -9,9 +10,6 @@ from models.archs.utils import init_model
 from trainer.utils import train
 from trainer.val import naive_validate
 
-MAX_EPOCHS = 100
-NUM_RUNS = 3
-THRESHOLD = 0.05
 
 
 def relearn_time(model, dataloaders, base_out, model_class, num_classes, device, seed, training_hp, print_freq=100):
@@ -31,7 +29,11 @@ def relearn_time(model, dataloaders, base_out, model_class, num_classes, device,
     "converged_per_run").
     """
 
+    MAX_EPOCHS = 10 # for now, while trouble shooting
+    NUM_RUNS = 1 # maybe increase this later, taking a long time
+    THRESHOLD = 0.05
     target_loss = base_out["forget"]["avg_loss"]
+    print(f"target_loss: {target_loss:.4f}")
 
     forget_loader = dataloaders["forget"]
     full_train_dataset = ConcatDataset([forget_loader.dataset, dataloaders["retain"].dataset])
@@ -51,17 +53,26 @@ def relearn_time(model, dataloaders, base_out, model_class, num_classes, device,
 
     for run in range(1, NUM_RUNS + 1):
 
-        run_seed = seed * 1000 + run
+        # `seed` here is already a derived value from further up the call chain (e.g.
+        # GRAND_SEED * 10_000 * m + i), so naively multiplying it again (the old `seed * 1000 +
+        # run`) can overflow numpy's legacy np.random.seed, which requires a value in
+        # [0, 2**32 - 1]. SeedSequence hashes arbitrarily large/composite inputs down to a
+        # well-distributed, always-in-range seed instead.
+        run_seed = int(np.random.SeedSequence([seed, run]).generate_state(1)[0])
         setup_seed(run_seed)
 
         relearn_model = init_model(model_class=model_class, num_classes=num_classes, checkpoint_path=None).to(device)
         relearn_model.load_state_dict(base_state_dict)
 
-        opt = torch.optim.Adam(relearn_model.parameters(), lr=training_hp["learning_rate"], weight_decay=training_hp.get("weight_decay", 0))
+        # changing opt hyperparams to be standard lr = 1e-4. no weight_decay
+        # opt = torch.optim.Adam(relearn_model.parameters(), lr=training_hp["learning_rate"], weight_decay=training_hp.get("weight_decay", 0))
+        opt = torch.optim.Adam(relearn_model.parameters(), lr=5e-5)
 
-        # a model that's already within THRESHOLD of the original forget-set loss needs 0 epochs of relearning
+        # a model that's already within THRESHOLD (above) or better than the original forget-set
+        # loss needs 0 epochs of relearning -- only an above-target loss counts as "not converged",
+        # since a lower loss than target is strictly better, not a failure to converge
         current_loss = naive_validate(forget_loader, relearn_model, criterion=criterion, device=device)
-        converged = abs(current_loss - target_loss) / target_loss <= THRESHOLD
+        converged = current_loss <= target_loss * (1 + THRESHOLD)
         epoch = 0
 
         while not converged and epoch < MAX_EPOCHS:
@@ -71,7 +82,8 @@ def relearn_time(model, dataloaders, base_out, model_class, num_classes, device,
             relearn_model, *_ = train(full_train_loader, relearn_model, criterion, opt, epoch=epoch, print_freq=print_freq, device=device, w_and_b=False)
 
             current_loss = naive_validate(forget_loader, relearn_model, criterion=criterion, device=device)
-            converged = abs(current_loss - target_loss) / target_loss <= THRESHOLD
+            print(f"current loss: {current_loss:.4f}\n")
+            converged = current_loss <= target_loss * (1 + THRESHOLD)
 
         epochs_per_run.append(epoch)
         converged_per_run.append(converged)

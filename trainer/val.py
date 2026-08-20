@@ -31,7 +31,7 @@ def naive_validate(val_loader, model, criterion, device):
     return losses_meter.avg
 
 
-def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, compute_fisher = False):
+def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, compute_fisher = False, fisher_chunk_size = 128):
     """
     Run evaluation
 
@@ -80,7 +80,14 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, c
             return -torch.nn.functional.nll_loss(log_probs, label.unsqueeze(0))
 
         # grad w.r.t. the first arg (params); vmap batches over dim 0 of sample/label,
-        # broadcasting params/buffers (in_dims=None) across the batch
+        # broadcasting params/buffers (in_dims=None) across the batch.
+        # NOTE: vmap's own `chunk_size` kwarg only bounds *peak* memory while it computes the
+        # per-sample grads -- the tensor it hands back is still [len(val_loader batch), *param
+        # shape] for every parameter, i.e. one full gradient copy per sample in the loader's
+        # batch (not per chunk). For a batch of 512 through an 11M-param ResNet that's ~23GB
+        # regardless of chunk_size, which is what actually OOMs. So instead we slice the batch
+        # into sub-batches of fisher_chunk_size ourselves below and accumulate incrementally,
+        # which bounds the per-sample-grad tensor itself to [fisher_chunk_size, *param shape].
         per_sample_grad = vmap(grad(compute_log_prob), in_dims=(None, None, 0, 0))
 
     for i, (image, target) in enumerate(val_loader):
@@ -119,10 +126,15 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, c
         m_entropies.append( m_entr.cpu() )
 
         if compute_fisher:
-            sample_grads = per_sample_grad(params, buffers, image, target)
-            for k in fisher_diag:
-                fisher_diag[k] += sample_grads[k].pow(2).sum(dim=0)
-                grad_sum[k] += sample_grads[k].sum(dim=0)
+            # torch.func.grad always runs with create_graph=True internally (needed for vmap
+            # to work), so without no_grad here the returned per-sample grads would stay
+            # attached to the ambient autograd graph instead of being freed once accumulated.
+            with torch.no_grad():
+                for sub_image, sub_target in zip(image.split(fisher_chunk_size), target.split(fisher_chunk_size)):
+                    sub_grads = per_sample_grad(params, buffers, sub_image, sub_target)
+                    for k in fisher_diag:
+                        fisher_diag[k] += sub_grads[k].pow(2).sum(dim=0)
+                        grad_sum[k] += sub_grads[k].sum(dim=0)
             total_fisher += image.shape[0]
 
         if i % print_freq == 0:

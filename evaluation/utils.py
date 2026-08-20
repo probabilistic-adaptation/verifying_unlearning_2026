@@ -39,8 +39,8 @@ def perform_MIA_attacks(main_out, seed):
     # could refactor that later
     # at least this way, they do not have to pass through the data loader for forget and test again
     # print("Running through `retain_one` and `retain_two` for MIAs...\n")
-    print("Gathering data for MIAs...\n")
-    num_forget_samples = len(main_out["forget"]["probs"][0]) # first dimension gives you number of samples, second dim is the num of classes
+    # print("Gathering data for MIAs...\n")
+    num_forget_samples = main_out["forget"]["probs"].shape[0] # number of forget samples (dim 1 is num classes)
     g = torch.Generator().manual_seed(seed)
     retain_probs = main_out["retain"]["probs"]
     test_probs = main_out["test"]["probs"]
@@ -49,7 +49,6 @@ def perform_MIA_attacks(main_out, seed):
     MIA_nonmember_train_probs = chosen_test_probs[:num_forget_samples]
     MIA_nonmember_test_probs = chosen_test_probs[num_forget_samples:]
 
-    print("Performing threshold MIA attack...\n")
     threshold_results = entropy_threshold_MIA(
         train_member_probs = MIA_member_train_probs,
         train_non_member_probs = MIA_nonmember_train_probs,
@@ -57,7 +56,6 @@ def perform_MIA_attacks(main_out, seed):
         audit_non_member_probs = MIA_nonmember_test_probs
         )
 
-    print("Performing logistic regression MIA attack...\n")
     logistic_results = logistic_regression_MIA(
         train_member_probs = MIA_member_train_probs,
         train_non_member_probs = MIA_nonmember_train_probs,
@@ -69,15 +67,15 @@ def perform_MIA_attacks(main_out, seed):
 
 
 
-def forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher = False):
-    
+def forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher = False, fisher_chunk_size = 128):
+
     # we deliberately set `print_freq` very high so we dont actually print anything
 
     print("Evaluating forget set metrics...\n")
-    forget_out = validate(dataloaders["forget"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = compute_fisher)
+    forget_out = validate(dataloaders["forget"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = compute_fisher, fisher_chunk_size = fisher_chunk_size)
 
     print("Evaluating retain set metrics...\n")
-    retain_out = validate(dataloaders["retain"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = compute_fisher)
+    retain_out = validate(dataloaders["retain"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = compute_fisher, fisher_chunk_size = fisher_chunk_size)
 
     print("Evaluating test set metrics...\n")
     # as of now, no metrics require computing FIM over the test set, so we hard-code False
@@ -92,7 +90,7 @@ def forget_retain_test_validation(model, dataloaders, device, criterion, compute
     return out
 
 
-def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = False):
+def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = False, fisher_chunk_size = 128):
     """
     Measure all the unlearning metrics which do NOT require a reference model for comparison
 
@@ -101,9 +99,9 @@ def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = Fals
 
     criterion= nn.CrossEntropyLoss()
     model.eval() # just overwhelmingly confirm that we are in eval mode here, regardless of whether the model was passed in eval mode
-    
+
     # add in metrics, as you'd like
-    main_out = forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher=compute_fisher)
+    main_out = forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher=compute_fisher, fisher_chunk_size=fisher_chunk_size)
 
     results = {
         "acc": {
@@ -131,7 +129,9 @@ def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = Fals
     
     threshold_MIA_results = []
     logistic_MIA_results = []
-    for i in range(3):
+    # we can afford to do a lot of MIAs, and the results vary a lot based on what random draw of data you get
+    for i in range(10):
+        print(f"MIAs {i}...")
         threshold_results, logistic_results = perform_MIA_attacks(main_out, seed + i)
         threshold_MIA_results.append(threshold_results)
         logistic_MIA_results.append(logistic_results)

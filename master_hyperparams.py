@@ -27,8 +27,8 @@ base = {
                 "lr": .01,
                 "opt": "SGD",
                 "weight_decay": 5e-4,
-                "num_epochs": 10,
-                "save_checkpoints_at": [5, 10],
+                "num_epochs": 30,
+                "save_checkpoints_at": [15, 30],
 
             },
             "GA": {
@@ -68,7 +68,7 @@ base = {
                 "lr": 0.01,
                 "num_epochs": 1,
                 "save_checkpoints_at": [1],
-                "lambda": 5e-7,
+                "lambda": 5e-7, # was 5e-7, didnt deteriorate much for seed 4
             },
 
             "SalUn": {},

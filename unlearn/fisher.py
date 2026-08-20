@@ -6,52 +6,52 @@ from tqdm import tqdm
 from torch.func import functional_call, vmap, grad
 
 
-def fisher_information_matrix(model, train_dl, device):
-    """
-    Calculate the fisher information matrix for the given model and training data loader.
+# def fisher_information_matrix(model, train_dl, device):
+#     """
+#     Calculate the fisher information matrix for the given model and training data loader.
 
-    This is an appropriximation of the FIM, i.e. the Diagonal Empirical FIM
-    We do not calculate the covariance terms between parameters - we just calculate the variance of each param individually
-    (i.e. only the diagonal of the matrix)
+#     This is an appropriximation of the FIM, i.e. the Diagonal Empirical FIM
+#     We do not calculate the covariance terms between parameters - we just calculate the variance of each param individually
+#     (i.e. only the diagonal of the matrix)
 
-    The original authors (Golatkar et al 2020a) suggest this approx is good enough for the purpose of adding noise.
+#     The original authors (Golatkar et al 2020a) suggest this approx is good enough for the purpose of adding noise.
 
-    The FIM is computed over the retain set, since its purpose is to approx the Hessian over the retain set, 
-    used in the optimal scrubbing step.
+#     The FIM is computed over the retain set, since its purpose is to approx the Hessian over the retain set, 
+#     used in the optimal scrubbing step.
 
-    The original authors find that F^-{1/2} approx's fisher noise better than F^-{1/4}
-    """
-    model.eval()
-    fisher_approximation = []
-    for parameter in model.parameters():
-        fisher_approximation.append(torch.zeros_like(parameter).to(device))
-    total = 0
-    for i, (data, label) in enumerate(tqdm(train_dl)):
-        data = data.to(device)
-        label = label.to(device)
-        predictions = torch.log_softmax(model(data), dim=-1)
-        real_batch = data.shape[0]
+#     The original authors find that F^-{1/2} approx's fisher noise better than F^-{1/4}
+#     """
+#     model.eval()
+#     fisher_approximation = []
+#     for parameter in model.parameters():
+#         fisher_approximation.append(torch.zeros_like(parameter).to(device))
+#     total = 0
+#     for i, (data, label) in enumerate(tqdm(train_dl)):
+#         data = data.to(device)
+#         label = label.to(device)
+#         predictions = torch.log_softmax(model(data), dim=-1)
+#         real_batch = data.shape[0]
 
-        epsilon = 1e-8
-        for i in range(real_batch):
-            label_i = label[i]
-            prediction = predictions[i][label_i]
-            gradient = grad(
-                prediction, model.parameters(), retain_graph=True, create_graph=False
-            )
-            for j, derivative in enumerate(gradient):
-                fisher_approximation[j] += (derivative + epsilon) ** 2
-        total += real_batch
-    for i, parameter in enumerate(model.parameters()):
-        fisher_approximation[i] = fisher_approximation[i] / total
+#         epsilon = 1e-8
+#         for i in range(real_batch):
+#             label_i = label[i]
+#             prediction = predictions[i][label_i]
+#             gradient = grad(
+#                 prediction, model.parameters(), retain_graph=True, create_graph=False
+#             )
+#             for j, derivative in enumerate(gradient):
+#                 fisher_approximation[j] += (derivative + epsilon) ** 2
+#         total += real_batch
+#     for i, parameter in enumerate(model.parameters()):
+#         fisher_approximation[i] = fisher_approximation[i] / total
 
-    return fisher_approximation
-
-
+#     return fisher_approximation
 
 
 
-def fisher_information_matrix(model, train_dl, device):
+
+
+def fisher_information_matrix(model, train_dl, device, fisher_chunk_size = 128):
     model.eval()
 
     params = {k: v.detach() for k, v in model.named_parameters()}
@@ -71,7 +71,14 @@ def fisher_information_matrix(model, train_dl, device):
         return -torch.nn.functional.nll_loss(log_probs, label.unsqueeze(0))
 
     # grad w.r.t. the first arg (params); vmap batches over dim 0 of sample/label,
-    # broadcasting params/buffers (in_dims=None) across the batch
+    # broadcasting params/buffers (in_dims=None) across the batch.
+    # NOTE: vmap's own `chunk_size` kwarg only bounds *peak* memory while it computes the
+    # per-sample grads -- the tensor it hands back is still [len(train_dl batch), *param shape]
+    # for every parameter, i.e. one full gradient copy per sample in the loader's batch (not per
+    # chunk). For a large batch through a large model that's tens of GB regardless of chunk_size,
+    # which is what actually OOMs. So instead we slice the batch into sub-batches of
+    # fisher_chunk_size ourselves below and accumulate incrementally, which bounds the
+    # per-sample-grad tensor itself to [fisher_chunk_size, *param shape].
     per_sample_grad = vmap(grad(compute_log_prob), in_dims=(None, None, 0, 0))
 
     for data, label in tqdm(train_dl):
@@ -79,10 +86,14 @@ def fisher_information_matrix(model, train_dl, device):
         label = label.to(device)
         real_batch = data.shape[0]
 
-        grads = per_sample_grad(params, buffers, data, label)
-
-        for k in fisher_approximation:
-            fisher_approximation[k] += grads[k].pow(2).sum(dim=0)
+        # torch.func.grad always runs with create_graph=True internally (needed for vmap to
+        # work), so without no_grad here the returned per-sample grads would stay attached to
+        # the ambient autograd graph instead of being freed once accumulated.
+        with torch.no_grad():
+            for sub_data, sub_label in zip(data.split(fisher_chunk_size), label.split(fisher_chunk_size)):
+                sub_grads = per_sample_grad(params, buffers, sub_data, sub_label)
+                for k in fisher_approximation:
+                    fisher_approximation[k] += sub_grads[k].pow(2).sum(dim=0)
 
         total += real_batch
 
@@ -121,10 +132,17 @@ def fisher(dataloaders, model, criterion, opt, epoch, device, w_and_b=True, **kw
         for i, (name, parameter) in enumerate(model.named_parameters()):
 
             # the original authors do not clamp the value of the noise, revisit this later
-            noise_std = torch.sqrt(lam / fisher_approximation[i]).clamp(max=1e-3)
+            # i have found the clamp is actually necessary, otherwise the noise destroys the model,
+            # can we just make it larger?
+            noise_std = torch.sqrt(lam / fisher_approximation[i]).clamp(max=2e-2) # was 1e-3
+            # removing clamp to see what happens
+            # noise_std = torch.sqrt(lam / fisher_approximation[i])
             noise_variance[name] = noise_std.pow(2)
 
             noise = noise_std * torch.empty_like(parameter).normal_(0, 1)
+            # i think we need to add this multiplication back in?
+            # noise = noise * 10 if parameter.shape[-1] == 10 else noise
+            # noise = noise * 10 if name in ("fc.weight", "fc.bias") else noise
             parameter.add_(noise)
 
     bound_info = {
