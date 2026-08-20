@@ -7,6 +7,30 @@ import wandb
 import torch.nn.functional as F
 from torch.func import functional_call, vmap, grad
 
+def naive_validate(val_loader, model, criterion, device):
+    """
+    Bare-bones version of `validate`: just the average loss over `val_loader`, without collecting
+    probs/entropies/fisher info. For call sites (e.g. relearn_time, which re-evaluates the forget
+    loss every epoch) that only need that one number and would otherwise pay for a lot of unused
+    bookkeeping.
+    """
+    losses_meter = AverageMeter()
+
+    model.eval()
+
+    with torch.no_grad():
+        for image, target in val_loader:
+            image = image.to(device)
+            target = target.to(device)
+
+            output = model(image)
+            loss = criterion(output, target)
+
+            losses_meter.update(loss.item(), image.size(0))
+
+    return losses_meter.avg
+
+
 def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, compute_fisher = False):
     """
     Run evaluation

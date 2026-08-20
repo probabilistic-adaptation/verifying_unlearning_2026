@@ -7,11 +7,66 @@ from trainer.val import validate
 # MIA (threshold function + SVC)
 from evaluation.MIA import MIA, entropy_threshold_MIA
 from evaluation.SVC_MIA import SVC_MIA
+from evaluation.logistic_MIA import logistic_regression_MIA
 
 from evaluation.distances import l2_distance, JSDiv, absolute_distance, kl_div_metric, pred_distribution_difference, normalized_confusion_distance
 from evaluation.weight_differences import weight_distance
+from evaluation.relearn_time import relearn_time
 from evaluation.residual_information import fisher_information_bound, information_score, efficacy, efficacy_upper_bound
 from scipy.stats import wasserstein_distance, ks_2samp
+
+
+
+
+def average_MIA_results(results_list):
+    """
+    Average MIA attack results (see entropy_threshold_MIA / logistic_regression_MIA) across
+    repeated runs with different seeds. Every key is mean-averaged, except
+    "n_forget_pred_member"/"n_forget_pred_non_member" (raw per-run counts), which are instead
+    collected into a list, one entry per run.
+    """
+    list_keys = {"n_forget_pred_member", "n_forget_pred_non_member"}
+    return {
+        key: [r[key] for r in results_list] if key in list_keys else sum(r[key] for r in results_list) / len(results_list)
+        for key in results_list[0]
+    }
+
+
+def perform_MIA_attacks(main_out, seed):
+
+    # now need to gather output dists and labels for retain_one and retain_two, for the MIAs
+    # Both MIAs recompute entropy and m-entropy, which is a bit of wasted computation,
+    # could refactor that later
+    # at least this way, they do not have to pass through the data loader for forget and test again
+    # print("Running through `retain_one` and `retain_two` for MIAs...\n")
+    print("Gathering data for MIAs...\n")
+    num_forget_samples = len(main_out["forget"]["probs"][0]) # first dimension gives you number of samples, second dim is the num of classes
+    g = torch.Generator().manual_seed(seed)
+    retain_probs = main_out["retain"]["probs"]
+    test_probs = main_out["test"]["probs"]
+    MIA_member_train_probs = retain_probs[torch.randperm(retain_probs.shape[0], generator=g)[:num_forget_samples]]
+    chosen_test_probs = test_probs[torch.randperm(test_probs.shape[0], generator=g)[:(2*num_forget_samples)]] # need twice as many so we can cut it in half
+    MIA_nonmember_train_probs = chosen_test_probs[:num_forget_samples]
+    MIA_nonmember_test_probs = chosen_test_probs[num_forget_samples:]
+
+    print("Performing threshold MIA attack...\n")
+    threshold_results = entropy_threshold_MIA(
+        train_member_probs = MIA_member_train_probs,
+        train_non_member_probs = MIA_nonmember_train_probs,
+        forget_probs = main_out['forget']["probs"],
+        audit_non_member_probs = MIA_nonmember_test_probs
+        )
+
+    print("Performing logistic regression MIA attack...\n")
+    logistic_results = logistic_regression_MIA(
+        train_member_probs = MIA_member_train_probs,
+        train_non_member_probs = MIA_nonmember_train_probs,
+        forget_probs = main_out['forget']["probs"],
+        audit_non_member_probs = MIA_nonmember_test_probs
+        )
+
+    return threshold_results, logistic_results
+
 
 
 def forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher = False):
@@ -40,6 +95,8 @@ def forget_retain_test_validation(model, dataloaders, device, criterion, compute
 def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = False):
     """
     Measure all the unlearning metrics which do NOT require a reference model for comparison
+
+    MIA values are averaged over three attacks each
     """
 
     criterion= nn.CrossEntropyLoss()
@@ -71,74 +128,24 @@ def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = Fals
             }
             }
 
-    # now need to gather output dists and labels for retain_one and retain_two, for the MIAs
-    # Both MIAs recompute entropy and m-entropy, which is a bit of wasted computation,
-    # could refactor that later
-    # at least this way, they do not have to pass through the data loader for forget and test again
-    # print("Running through `retain_one` and `retain_two` for MIAs...\n")
-    print("Gathering data for MIAs...\n")
-    num_forget_samples = len(main_out["forget"]["probs"][0]) # first dimension gives you number of samples, second dim is the num of classes
-    g = torch.Generator().manual_seed(seed)
-    retain_probs = main_out["retain"]["probs"]
-    test_probs = main_out["test"]["probs"]
-    MIA_member_train_probs = retain_probs[torch.randperm(retain_probs.shape[0], generator=g)[:num_forget_samples]]
-    chosen_test_probs = test_probs[torch.randperm(test_probs.shape[0], generator=g)[:(2*num_forget_samples)]] # need twice as many so we can cut it in half
-    MIA_nonmember_train_probs = chosen_test_probs[:num_forget_samples]
-    MIA_nonmember_test_probs = chosen_test_probs[num_forget_samples:]
-
-    # MIA_member_train_out = validate(dataloaders["MIA_member_train"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
-    # # retain_two_out = validate(dataloaders["retain_two"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False)
-    # main_out.update({
-    #     "retain_one": retain_one_out,
-    #     "retain_two": retain_two_out,
-    # })
     
-    print("Performing threshold MIA attack...\n")
-    attack_results = entropy_threshold_MIA(
-        train_member_probs = MIA_member_train_probs, 
-        train_non_member_probs = MIA_nonmember_train_probs, 
-        forget_probs = main_out['forget']["probs"], 
-        audit_non_member_probs = MIA_nonmember_test_probs
-        )
-    
-    # attack results should look something like this:
-    # attack_results = {
-    #     "correctness": #,
-    #     "class": {
-    #         "confidence": #,
-    #         "entropy": #,
-    #         "m_entropy": #
-    #     },
-    #     "no_class": {
-    #         "confidence": #,
-    #         "entropy": #,
-    #         "m_entropy": #
-    #     }
-    # }
-    
-    results["threshold_MIA"] = attack_results
+    threshold_MIA_results = []
+    logistic_MIA_results = []
+    for i in range(3):
+        threshold_results, logistic_results = perform_MIA_attacks(main_out, seed + i)
+        threshold_MIA_results.append(threshold_results)
+        logistic_MIA_results.append(logistic_results)
 
-    # # COMMENTING OUT SVC FOR NOW, TAKES TOO LONG
 
-    # print("Performing SVC MIA attack...\n")
-    # # `device` is inferred by whatever the device the model is on - dont explicitly pass it (might be smart to do this in other areas too, so you dont have to carry `device` around)
-    # # need the (probs, labels) outputs for each data loader we care about - some have already been computed through other passes through forget and test
+    results["threshold_MIA"] = average_MIA_results(threshold_MIA_results)
+    results["logistic_regression_MIA"] = average_MIA_results(logistic_MIA_results)
 
-    # # we do not need to convert this output using ".numpy()", since the SVC operations are done using torch
-    # attack_results = SVC_MIA(
-    #     shadow_train_inputs = (retain_one_probs, retain_one_labels), 
-    #     shadow_test_inputs = (test_probs, test_labels),
-    #     target_train_inputs = (retain_two_probs, retain_two_labels),
-    #     target_test_inputs = (forget_probs, forget_labels),
-    #     model = model
-    #     )
-    # results["SVC_MIA"] = attack_results
 
     return results, main_out
 
 
 
-def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None, compute_fisher = False, bound_info = None):
+def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_class, training_hp, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None, compute_fisher = False, bound_info = None):
     """
     Measure ALL unlearning metrics, including those which require a reference model for comparison
 
@@ -152,6 +159,12 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, retrai
     bound_info: the dict returned by unlearn.fisher.fisher() (only produced when `model` was
     unlearned via Fisher scrubbing). Needed for fisher_information_bound; the other residual
     information metrics don't use it.
+
+    model_class, training_hp: passed straight through to evaluation/relearn_time.py's relearn_time
+    metric, which is always computed here. `training_hp` is the model's `["training"]` hyperparams
+    block (e.g. `hyperparams[dataset][model_class]["training"]`), supplying the learning
+    rate/weight decay to relearn with -- the same protocol used to train the retrain-from-scratch
+    models, minus their cosine annealing schedule.
     """
 
     # do the first pass of solo metrics on your main model (usually the unlearned one)
@@ -264,6 +277,18 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, retrai
             )
 
         main_results["residual_information"] = residual_information
+
+    print("Measuring relearn time...\n")
+    main_results["relearn_time"] = relearn_time(
+        model = model,
+        dataloaders = dataloaders,
+        base_out = base_out,
+        model_class = model_class,
+        num_classes = num_classes,
+        device = device,
+        seed = seed,
+        training_hp = training_hp,
+    )
 
     return main_results, main_out
     

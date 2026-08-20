@@ -310,11 +310,13 @@ def do_unlearning(
         checkpoint_subfolder,
         blank_model,
         seed,
+        model_class,
+        training_hp,
         retrain_out_path = None,
         base_out_path = None,
         num_classes = None,
         retrain_model = None,
-        base_model = None 
+        base_model = None
         ):
     """
     Router for executing unlearning
@@ -498,6 +500,8 @@ def do_unlearning(
                 dataloaders = dataloaders,
                 device = device,
                 seed = seed, # we need the random seed to ground the choice of random draws for the MIA training and test data
+                model_class = model_class,
+                training_hp = training_hp,
                 retrain_out_path = retrain_out_path,
                 bad_teacher = blank_model,
                 base_out_path = base_out_path,
