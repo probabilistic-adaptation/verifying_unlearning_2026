@@ -13,9 +13,6 @@ def l2_distance(p, q):
     return distances.mean().item()
 
 
-
-
-
 # def get_wasserstein_distance(tensor1, tensor2):
 #     dists = []
 #     for i in range(len(tensor1)):
