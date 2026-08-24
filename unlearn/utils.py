@@ -365,7 +365,7 @@ def do_unlearning(
         sample_batch = next(iter(dataloaders["forget"]))
         sample_img = sample_batch[0][0]
         noise_batch_size = method_hyperparams.get("noise_batch_size", 128)
-        C, H, W = sample_img.shapeFalse
+        C, H, W = sample_img.shape
 
         # Train the noise module to maximally confuse the model on the forget class
         noise = UNSIR_noise(noise_batch_size, C, H, W).to(device)
@@ -533,7 +533,7 @@ def do_unlearning(
 
             # ... and if we're saving checkpoints out,
         
-            unlearn_checkpoint_path = os.path.join(checkpoint_subfolder, f"{method}_epoch_{k}_{forget_set_type}_{unlearning_item}.pth")
+            unlearn_checkpoint_path = os.path.join(checkpoint_subfolder, f"{method}_epoch_{k}_{forget_set_type}_{unlearning_item}_run_{run}.pth")
             checkpoint = {
                 'epoch': k,
                 'model_state_dict': model.state_dict(),
