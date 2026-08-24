@@ -1,7 +1,7 @@
 import torch
 
 
-def weight_distance(unlearned_model, reference_model, type = "l2", layer_wise = False):#
+def weight_distance(unlearned_model, reference_model, type = "l2", layer_wise = False):
     
     if type == "l2":
         p = 2

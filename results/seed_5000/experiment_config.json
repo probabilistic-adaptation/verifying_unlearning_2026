@@ -1,5 +1,5 @@
 {
-    "description": "Dry run of pipeline - seed 5000",
+    "description": "Adding UNSIRE to seed 5000",
     "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "class",
@@ -27,13 +27,6 @@
     },
     "unlearning": {
         "methods": [
-            "FT",
-            "GA",
-            "NegGrad_plus",
-            "RL",
-            "boundary_shrink",
-            "bad_teacher",
-            "scrub",
             "UNSIR"
         ],
         "FT": {

@@ -31,7 +31,7 @@ def naive_validate(val_loader, model, criterion, device):
     return losses_meter.avg
 
 
-def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, compute_fisher = False, fisher_chunk_size = 128):
+def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, compute_fisher = False, fisher_chunk_size = 32):
     """
     Run evaluation
 

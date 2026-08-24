@@ -1,13 +1,6 @@
 import copy
+from evaluation.utils import deep_update
 
-def deep_update(base, overrides):
-    base = copy.deepcopy(base)
-    for key, value in overrides.items():
-        if isinstance(value, dict) and isinstance(base.get(key), dict):
-            base[key] = deep_update(base[key], value)
-        else:
-            base[key] = value
-    return base
 
 base = {
     

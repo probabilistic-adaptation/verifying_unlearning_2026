@@ -16,6 +16,17 @@ from evaluation.residual_information import fisher_information_bound, informatio
 from scipy.stats import wasserstein_distance, ks_2samp
 
 
+def deep_update(base, overrides):
+    """
+    A function for recursively updating the elements of a dictionary
+    """
+    base = copy.deepcopy(base)
+    for key, value in overrides.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            base[key] = deep_update(base[key], value)
+        else:
+            base[key] = value
+    return base
 
 
 def average_MIA_results(results_list):
@@ -67,7 +78,7 @@ def perform_MIA_attacks(main_out, seed):
 
 
 
-def forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher = False, fisher_chunk_size = 128):
+def forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher = False, fisher_chunk_size = 32):
 
     # we deliberately set `print_freq` very high so we dont actually print anything
 
@@ -90,7 +101,7 @@ def forget_retain_test_validation(model, dataloaders, device, criterion, compute
     return out
 
 
-def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = False, fisher_chunk_size = 128):
+def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = False, fisher_chunk_size = 32):
     """
     Measure all the unlearning metrics which do NOT require a reference model for comparison
 
@@ -140,12 +151,11 @@ def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = Fals
     results["threshold_MIA"] = average_MIA_results(threshold_MIA_results)
     results["logistic_regression_MIA"] = average_MIA_results(logistic_MIA_results)
 
-
     return results, main_out
 
 
 
-def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_class, training_hp, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None, compute_fisher = False, bound_info = None):
+def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_class, training_hp, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None, compute_fisher = False, bound_info = None, fisher_chunk_size = 32):
     """
     Measure ALL unlearning metrics, including those which require a reference model for comparison
 
@@ -168,7 +178,7 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_
     """
 
     # do the first pass of solo metrics on your main model (usually the unlearned one)
-    main_results, main_out = measure_solo_metrics(model, dataloaders, device, seed = seed, compute_fisher = compute_fisher)
+    main_results, main_out = measure_solo_metrics(model, dataloaders, device, seed = seed, compute_fisher = compute_fisher, fisher_chunk_size = fisher_chunk_size)
     # load your reference out object (usually retrain from scratch)
     retrain_out = torch.load(retrain_out_path)
     # ensure bad teacher is in eval mode
@@ -198,7 +208,7 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_
     base_preds = base_out['forget']['probs'].argmax(dim = 1)
     true_forget_labels = main_out["forget"]["targets"]
 
-    main_results.update({ 
+    main_results = deep_update(main_results, { 
 
         "outputs": {
             
