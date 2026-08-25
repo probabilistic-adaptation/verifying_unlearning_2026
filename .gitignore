@@ -192,5 +192,11 @@ results/**/*.pth
 # Claude local preferences
 .claude/
 
+# more caches
+data_cache/
+
+# any remaining pth files I missed
+*.pth
+
 # End of https://www.toptal.com/developers/gitignore/api/python
 
