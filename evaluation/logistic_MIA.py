@@ -47,8 +47,8 @@ def logistic_regression_MIA(train_member_probs, train_non_member_probs, forget_p
         "avg_member_probability_forget": np.mean(forget_member_prob),
         "n_forget_pred_member": int(np.sum(forget_preds == 1)),
         "n_forget_pred_non_member": int(np.sum(forget_preds == 0)),
-        "TP": tp / (tp + fn) if (tp + fn) > 0 else 0.0,
-        "TN": tn / (tn + fp) if (tn + fp) > 0 else 0.0,
-        "FP": fp / (fp + tn) if (fp + tn) > 0 else 0.0,
-        "FN": fn / (fn + tp) if (fn + tp) > 0 else 0.0,
+        "TP": tp,
+        "TN": tn,
+        "FP": fp,
+        "FN": fn
     }

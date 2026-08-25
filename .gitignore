@@ -189,6 +189,9 @@ models/model_checkpoints/
 # large results things
 results/**/*.pth
 
+# generated plots (any "plots/" subdirectory, anywhere)
+# plots/
+
 # Claude local preferences
 .claude/
 

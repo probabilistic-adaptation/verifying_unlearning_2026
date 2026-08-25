@@ -15,3 +15,5 @@ def weight_distance(unlearned_model, reference_model, type = "l2", layer_wise = 
         raise ValueError("layer-wise output is not implemented yet")
     else:    
         out = torch.norm(params_a - params_b, p=p)
+
+    return out.item()

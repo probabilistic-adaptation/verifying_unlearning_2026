@@ -358,8 +358,8 @@ def entropy_threshold_MIA(train_member_probs, train_non_member_probs, forget_pro
         "avg_member_probability_forget": np.mean(forget_member_prob).item(),
         "n_forget_pred_member": int(np.sum(forget_preds == 1)),
         "n_forget_pred_non_member": int(np.sum(forget_preds == 0)),
-        "TP": (tp / (tp + fn)).item() if (tp + fn) > 0 else 0.0,
-        "TN": (tn / (tn + fp)).item() if (tn + fp) > 0 else 0.0,
-        "FP": (fp / (fp + tn)).item() if (fp + tn) > 0 else 0.0,
-        "FN": (fn / (fn + tp)).item() if (fn + tp) > 0 else 0.0,
+        "TP": tp,
+        "TN": tn,
+        "FP": fp,
+        "FN": fn
     }

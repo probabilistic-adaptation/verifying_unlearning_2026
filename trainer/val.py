@@ -31,7 +31,7 @@ def naive_validate(val_loader, model, criterion, device):
     return losses_meter.avg
 
 
-def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, compute_fisher = False, fisher_chunk_size = 32):
+def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, compute_fisher = False, fisher_chunk_size = 32, track_forgotten_class = False, forgotten_class = 5):
     """
     Run evaluation
 
@@ -47,6 +47,11 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, c
     only one extra (vmap'd) forward/backward per batch, on top of the no_grad one already done for
     accuracy/entropy. This is off by default since most call sites (e.g. per-epoch training
     validation) don't need it and it isn't free.
+
+    If track_forgotten_class=True, also accumulate over val_loader: among samples whose true
+    label is `forgotten_class`, what share does the model still classify as `forgotten_class`.
+    Meant for class-forgetting scenarios, evaluated over the test set (which still contains
+    samples of the forgotten class, unlike the forget/retain split).
     """
     losses = []
     probs = []
@@ -90,6 +95,10 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, c
         # which bounds the per-sample-grad tensor itself to [fisher_chunk_size, *param shape].
         per_sample_grad = vmap(grad(compute_log_prob), in_dims=(None, None, 0, 0))
 
+    if track_forgotten_class:
+        n_forgotten_seen = 0
+        n_forgotten_classified = 0
+
     for i, (image, target) in enumerate(val_loader):
         image = image.to(device)
         target = target.to(device)
@@ -107,6 +116,14 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, c
 
         # measure accuracy and record loss
         prec1 = accuracy(output.detach(), target)[0]
+
+        if track_forgotten_class:
+            forgotten_mask = target == forgotten_class
+            n_forgotten_in_batch = forgotten_mask.sum().item()
+            if n_forgotten_in_batch > 0:
+                preds = output.detach().argmax(dim=1)
+                n_forgotten_seen += n_forgotten_in_batch
+                n_forgotten_classified += (preds[forgotten_mask] == forgotten_class).sum().item()
 
         # update trackers
         losses_meter.update(loss.item(), image.size(0))
@@ -171,5 +188,11 @@ def validate(val_loader, model, criterion, print_freq, device, w_and_b = True, c
         out["grad_norm"] = torch.linalg.norm(
             torch.cat([(grad_sum[name] / (total_fisher + epsilon)).flatten() for name, _ in named_params])
         ).item()
+
+    if track_forgotten_class:
+        epsilon = 1e-8
+        out["n_forgotten_class_seen"] = n_forgotten_seen
+        out["n_forgotten_class_classified"] = n_forgotten_classified
+        out["forgotten_class_fraction"] = n_forgotten_classified / (n_forgotten_seen + epsilon)
 
     return out

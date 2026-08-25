@@ -508,8 +508,10 @@ def do_unlearning(
                 num_classes = num_classes,
                 retrain_model = retrain_model,
                 base_model = base_model,
-                compute_fisher = True,
-                bound_info = bound_info
+                compute_fisher = False,
+                bound_info = bound_info,
+                forget_set_type = forget_set_type,
+                unlearning_item = unlearning_item
                 )
             # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({

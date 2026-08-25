@@ -29,9 +29,9 @@ def relearn_time(model, dataloaders, base_out, model_class, num_classes, device,
     "converged_per_run").
     """
 
-    MAX_EPOCHS = 10 # for now, while trouble shooting
-    NUM_RUNS = 1 # maybe increase this later, taking a long time
-    THRESHOLD = 0.05
+    MAX_EPOCHS = 30 # for now, while trouble shooting
+    NUM_RUNS = 3 # maybe increase this later, taking a long time
+    THRESHOLD = 0.2
     target_loss = base_out["forget"]["avg_loss"]
     print(f"target_loss: {target_loss:.4f}")
 

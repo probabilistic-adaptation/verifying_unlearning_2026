@@ -1,3 +1,4 @@
+import copy
 import torch
 import torch.nn as nn
 
@@ -43,6 +44,25 @@ def average_MIA_results(results_list):
     }
 
 
+def mia_forgetting_rate(before_mia, after_mia):
+    """
+    MIA-based "forgetting rate" (FR), comparing a membership-inference oracle's predictions on
+    the forget set D before vs. after unlearning: FR = (AF - BF) / BT, where
+      - AF: # of D predicted non-member ("False") by the oracle, after unlearning
+      - BF: # of D predicted non-member ("False") by the oracle, before unlearning
+      - BT: # of D predicted member ("True") by the oracle, before unlearning
+    `before_mia`/`after_mia` are entropy_threshold_MIA/logistic_regression_MIA output dicts
+    (e.g. base_out["threshold_MIA"] and main_results["threshold_MIA"]) -- since those functions
+    always label D itself (the forget set) as the positive/member class, "predicted False" on D
+    is exactly their FN count and "predicted True" on D is exactly their TP count.
+    """
+    epsilon = 1e-8
+    AF = after_mia["FN"]
+    BF = before_mia["FN"]
+    BT = before_mia["TP"]
+    return (AF - BF) / (BT + epsilon)
+
+
 def perform_MIA_attacks(main_out, seed):
 
     # now need to gather output dists and labels for retain_one and retain_two, for the MIAs
@@ -78,7 +98,7 @@ def perform_MIA_attacks(main_out, seed):
 
 
 
-def forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher = False, fisher_chunk_size = 32):
+def forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher = False, fisher_chunk_size = 32, track_forgotten_class = False, forgotten_class = 5):
 
     # we deliberately set `print_freq` very high so we dont actually print anything
 
@@ -89,8 +109,10 @@ def forget_retain_test_validation(model, dataloaders, device, criterion, compute
     retain_out = validate(dataloaders["retain"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = compute_fisher, fisher_chunk_size = fisher_chunk_size)
 
     print("Evaluating test set metrics...\n")
-    # as of now, no metrics require computing FIM over the test set, so we hard-code False
-    test_out = validate(dataloaders["test"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = False)
+    # as of now, no metrics require computing FIM over the test set, so we hard-code False.
+    # track_forgotten_class only applies here: the test set is the only split that still
+    # contains samples of the forgotten class in a class-forgetting scenario.
+    test_out = validate(dataloaders["test"], model, criterion = criterion, print_freq = 100_000, device = device, w_and_b=False, compute_fisher = False, track_forgotten_class = track_forgotten_class, forgotten_class = forgotten_class)
 
     out = {
         "forget": forget_out,
@@ -101,7 +123,7 @@ def forget_retain_test_validation(model, dataloaders, device, criterion, compute
     return out
 
 
-def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = False, fisher_chunk_size = 32):
+def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = False, fisher_chunk_size = 32, track_forgotten_class = False, forgotten_class = 5):
     """
     Measure all the unlearning metrics which do NOT require a reference model for comparison
 
@@ -112,7 +134,7 @@ def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = Fals
     model.eval() # just overwhelmingly confirm that we are in eval mode here, regardless of whether the model was passed in eval mode
 
     # add in metrics, as you'd like
-    main_out = forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher=compute_fisher, fisher_chunk_size=fisher_chunk_size)
+    main_out = forget_retain_test_validation(model, dataloaders, device, criterion, compute_fisher=compute_fisher, fisher_chunk_size=fisher_chunk_size, track_forgotten_class=track_forgotten_class, forgotten_class=forgotten_class)
 
     results = {
         "acc": {
@@ -141,21 +163,29 @@ def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = Fals
     threshold_MIA_results = []
     logistic_MIA_results = []
     # we can afford to do a lot of MIAs, and the results vary a lot based on what random draw of data you get
-    for i in range(10):
-        print(f"MIAs {i}...")
+    print("Performing 25 MIAs each...\n")
+    for i in range(25):
         threshold_results, logistic_results = perform_MIA_attacks(main_out, seed + i)
         threshold_MIA_results.append(threshold_results)
         logistic_MIA_results.append(logistic_results)
 
 
-    results["threshold_MIA"] = average_MIA_results(threshold_MIA_results)
-    results["logistic_regression_MIA"] = average_MIA_results(logistic_MIA_results)
+    avg_threshold_results = average_MIA_results(threshold_MIA_results)
+    results["threshold_MIA"] = avg_threshold_results
+    main_out["threshold_MIA"] = avg_threshold_results
+
+    avg_logistic_results = average_MIA_results(logistic_MIA_results)
+    results["logistic_regression_MIA"] = avg_logistic_results
+    main_out["logistic_regression_MIA"] = avg_logistic_results
+
+    if track_forgotten_class:
+        results["forgotten_class_fraction"] = main_out["test"]["forgotten_class_fraction"]
 
     return results, main_out
 
 
 
-def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_class, training_hp, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None, compute_fisher = False, bound_info = None, fisher_chunk_size = 32):
+def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_class, training_hp, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None, compute_fisher = False, bound_info = None, fisher_chunk_size = 32, forget_set_type = None, unlearning_item = None):
     """
     Measure ALL unlearning metrics, including those which require a reference model for comparison
 
@@ -175,26 +205,47 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_
     block (e.g. `hyperparams[dataset][model_class]["training"]`), supplying the learning
     rate/weight decay to relearn with -- the same protocol used to train the retrain-from-scratch
     models, minus their cosine annealing schedule.
+
+    forget_set_type, unlearning_item: only used to decide whether to track the forgotten-class
+    retention metric (trainer.val.validate's track_forgotten_class) -- it's only meaningful for
+    class forgetting, so it's only enabled when forget_set_type == "class", using
+    unlearning_item as the forgotten class label.
     """
 
+    track_forgotten_class = forget_set_type == "class"
+
     # do the first pass of solo metrics on your main model (usually the unlearned one)
-    main_results, main_out = measure_solo_metrics(model, dataloaders, device, seed = seed, compute_fisher = compute_fisher, fisher_chunk_size = fisher_chunk_size)
+    main_results, main_out = measure_solo_metrics(model, dataloaders, device, seed = seed, compute_fisher = compute_fisher, fisher_chunk_size = fisher_chunk_size, track_forgotten_class = track_forgotten_class, forgotten_class = unlearning_item)
     # load your reference out object (usually retrain from scratch)
-    retrain_out = torch.load(retrain_out_path)
+    retrain_out = torch.load(retrain_out_path, weights_only=False)
     # ensure bad teacher is in eval mode
     bad_teacher.eval()
     # load original model out object
-    base_out = torch.load(base_out_path)
+    base_out = torch.load(base_out_path, weights_only=False)
 
     # Tug-of-War metric
     da_forget = abs(main_results["acc"]["forget"] - retrain_out["forget"]["avg_acc"]) / 100
     da_retain = abs(main_results["acc"]["retain"] - retrain_out["retain"]["avg_acc"]) / 100
     da_test = abs(main_results["acc"]["test"] - retrain_out["test"]["avg_acc"]) / 100
+    unlearned_MIA_efficacy = main_out["threshold_MIA"]["efficacy"]
+    retrained_MIA_efficacy = retrain_out["threshold_MIA"]["efficacy"]
+    dm = abs(unlearned_MIA_efficacy - retrained_MIA_efficacy)
 
     ToW = (1 - da_forget) * (1 - da_retain) * (1 - da_test)
+    ToW_MIA = (1 - dm) * (1 - da_retain) * (1 - da_test)
     main_results.update({
-        "ToW": ToW
+        "ToW": ToW,
+        "ToW_MIA": ToW_MIA
     })
+
+    # MIA forgetting rate: compares the base (pre-unlearning) model's MIA attack against the
+    # unlearned model's, both restricted to the forget set -- see mia_forgetting_rate() above.
+    main_results["threshold_MIA"]["forgetting_rate"] = mia_forgetting_rate(
+        base_out["threshold_MIA"], main_results["threshold_MIA"]
+    )
+    main_results["logistic_regression_MIA"]["forgetting_rate"] = mia_forgetting_rate(
+        base_out["logistic_regression_MIA"], main_results["logistic_regression_MIA"]
+    )
 
     print(f"Evaluating differences/distances between unlearned, retrain, and bad_teacher outputs ...\n")
     
