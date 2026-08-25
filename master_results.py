@@ -127,6 +127,13 @@ SCATTERPLOT_PAIRS = [
          xlabel = "F1-score", ylabel = "Average member probability (forget set)"),
 
 
+    dict(x_metric="threshold_MIA.efficacy", 
+         y_metric="threshold_MIA.forgetting_rate",
+        #  title="Threshold MIA: attack efficacy vs. accuracy", 
+         color_by="method", line=0,
+         xlabel = "Efficacy", ylabel = "Forgetting rate"),
+
+
 
     # ----------------
     # -- MIA (logistic)
@@ -181,6 +188,12 @@ SCATTERPLOT_PAIRS = [
          y_metric="logistic_regression_MIA.avg_member_probability_forget",
          title="Logistic Regression MIA: attack F1-score vs. average member probability (forget set)", color_by="method", line=0,
          xlabel = "F1-score", ylabel = "Average member probability (forget set)"),
+
+    dict(x_metric="logistic_regression_MIA.efficacy", 
+         y_metric="logistic_regression_MIA.forgetting_rate",
+        #  title="Threshold MIA: attack efficacy vs. accuracy", 
+         color_by="method", line=0,
+         xlabel = "Efficacy", ylabel = "Forgetting rate"),
 
 
 
