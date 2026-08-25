@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score, f1_score
+from sklearn.metrics import roc_auc_score, f1_score, confusion_matrix
 
 """
 MIA implementation using a logistic regression classifier trained directly on the model's
@@ -37,6 +37,8 @@ def logistic_regression_MIA(train_member_probs, train_non_member_probs, forget_p
     forget_preds = audit_preds[:n_forget]
     forget_member_prob = audit_member_prob[:n_forget]
 
+    tn, fp, fn, tp = confusion_matrix(y_audit, audit_preds, labels=[0, 1]).ravel()
+
     return {
         "efficacy": np.mean(forget_preds == 0),
         "attack_accuracy": np.mean(audit_preds == y_audit),
@@ -45,4 +47,8 @@ def logistic_regression_MIA(train_member_probs, train_non_member_probs, forget_p
         "avg_member_probability_forget": np.mean(forget_member_prob),
         "n_forget_pred_member": int(np.sum(forget_preds == 1)),
         "n_forget_pred_non_member": int(np.sum(forget_preds == 0)),
+        "TP": tp / (tp + fn) if (tp + fn) > 0 else 0.0,
+        "TN": tn / (tn + fp) if (tn + fp) > 0 else 0.0,
+        "FP": fp / (fp + tn) if (fp + tn) > 0 else 0.0,
+        "FN": fn / (fn + tp) if (fn + tp) > 0 else 0.0,
     }
