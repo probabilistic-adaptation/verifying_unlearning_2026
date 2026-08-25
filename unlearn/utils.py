@@ -522,7 +522,7 @@ def do_unlearning(
                 "unlearning_item": unlearning_item,
                 "method": method,
                 "epoch_duration": epoch_duration,
-                "total_unlearning_time_up_to_now": total_unlearning_time_ms
+                "total_unlearning_time_up_to_now": total_unlearning_time_ms / 60_000 # convert ms to minutes
             })
 
             # ... and save them
