@@ -316,7 +316,8 @@ def do_unlearning(
         base_out_path = None,
         num_classes = None,
         retrain_model = None,
-        base_model = None
+        base_model = None,
+        measure_relearn_time = True
         ):
     """
     Router for executing unlearning
@@ -511,7 +512,8 @@ def do_unlearning(
                 compute_fisher = False,
                 bound_info = bound_info,
                 forget_set_type = forget_set_type,
-                unlearning_item = unlearning_item
+                unlearning_item = unlearning_item,
+                measure_relearn_time = measure_relearn_time
                 )
             # print(f"[do_unlearning] after measure_unlearning_metrics: model.training = {model.training}")
             results.update({

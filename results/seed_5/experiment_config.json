@@ -1,11 +1,11 @@
 {
-    "description": "Continuing official seed 5 - ResNet, CIFAR10, random unlearning",
+    "description": "Official run seed 5 - random forgetting, CIFAR10, ResNet18",
     "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "random",
     "num_runs": 3,
-    "measure_base_results": false,
-    "measure_retrain_results": false,
+    "measure_base_results": true,
+    "measure_retrain_results": true,
     "data": {
         "dataset": "CIFAR10",
         "num_classes": 10,
@@ -27,18 +27,23 @@
     },
     "unlearning": {
         "methods": [
+            "FT",
             "GA",
-            "NegGrad_plus"
+            "NegGrad+",
+            "RL",
+            "boundary_shrink",
+            "bad_teacher",
+            "scrub"
         ],
         "FT": {
             "print_freq": 8,
             "lr": 0.01,
             "opt": "SGD",
             "weight_decay": 0.0005,
-            "num_epochs": 10,
+            "num_epochs": 30,
             "save_checkpoints_at": [
-                5,
-                10
+                15,
+                30
             ]
         },
         "GA": {
@@ -145,10 +150,10 @@
             "lr_impair": 0.01,
             "lr_repair": 0.01,
             "impair_epochs": 1,
-            "num_epochs": 10,
+            "num_epochs": 20,
             "save_checkpoints_at": [
-                1,
-                10
+                10,
+                20
             ]
         }
     },

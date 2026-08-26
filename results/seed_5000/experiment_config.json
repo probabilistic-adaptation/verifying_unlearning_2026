@@ -1,9 +1,9 @@
 {
-    "description": "Adding UNSIRE to seed 5000",
+    "description": "Testing smaller UNSIR impairment",
     "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "class",
-    "num_runs": 3,
+    "num_runs": 1,
     "measure_base_results": false,
     "measure_retrain_results": false,
     "data": {
@@ -29,6 +29,7 @@
         "methods": [
             "UNSIR"
         ],
+        "measure_relearn_time": false,
         "FT": {
             "print_freq": 8,
             "lr": 0.01,
@@ -141,13 +142,13 @@
             "noise_train_epochs": 5,
             "opt": "Adam",
             "lr": 0,
-            "lr_impair": 0.01,
-            "lr_repair": 0.01,
+            "lr_impair": 0.001,
+            "lr_repair": 0.001,
             "impair_epochs": 1,
-            "num_epochs": 10,
+            "num_epochs": 2,
             "save_checkpoints_at": [
                 1,
-                10
+                2
             ]
         }
     },

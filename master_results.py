@@ -11,6 +11,7 @@ import re
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import torch
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -768,6 +769,148 @@ def run_scatterplots(results, plots_folder):
                 print(f"[master_results] skipped scatterplot for '{x_metric}' vs '{y_metric}' (grouped={grouped}): {e}")
 
 
+def discover_out_pth_files(results_folder):
+    """
+    Find every '*_out.pth' checkpoint-output file under results_folder, labeled
+    with the (method, epoch) parsed from its sibling '<...>.json' result file
+    (the same file gather_results() reads) -- so labeling stays consistent with
+    the rest of this script without re-deriving it from the path.
+    """
+    entries = []
+    for root, dirs, files in os.walk(results_folder):
+        for fname in files:
+            if not fname.endswith('_out.pth'):
+                continue
+            pth_path = os.path.join(root, fname)
+            json_path = pth_path[:-len('_out.pth')] + '.json'
+            if not os.path.exists(json_path):
+                continue
+            with open(json_path) as fh:
+                d = json.load(fh)
+            result_type = d.get('type', 'unknown')
+            if result_type == 'base':
+                method, epoch = 'base', -99
+            elif result_type == 'retrain':
+                method, epoch = 'retrain', -98
+            else:
+                method, epoch = d.get('method'), d.get('epoch')
+            entries.append({'pth_path': pth_path, 'method': method, 'epoch': epoch})
+    return entries
+
+
+def _latest_epoch_per_method(entries):
+    """
+    Keep every 'base'/'retrain' entry, but for every other method keep only
+    the entries at that method's highest epoch (e.g. FT_epoch_30, not
+    FT_epoch_15) -- so the chart shows one bar-group per method instead of
+    one per (method, epoch) checkpoint.
+    """
+    max_epoch = {}
+    for e in entries:
+        if e['method'] in ('base', 'retrain'):
+            continue
+        max_epoch[e['method']] = max(max_epoch.get(e['method'], e['epoch']), e['epoch'])
+    return [
+        e for e in entries
+        if e['method'] in ('base', 'retrain') or e['epoch'] == max_epoch[e['method']]
+    ]
+
+
+def prediction_distribution_chart(entries, num_classes,
+                                  base_color="black", retain_color="purple",
+                                #   title="Prediction Distribution by Model - Full Forget Set",
+                                  save_path=None):
+    """
+    Bar chart of predicted-class share on the forget set for every model
+    checkpoint in `entries` (from discover_out_pth_files()), grouped by
+    (method, epoch) and averaged across runs, with error bars showing the
+    standard deviation across those runs. Reads out["forget"]["probs"]
+    straight from each checkpoint's *_out.pth file (already softmax
+    probabilities -- see trainer/val.py) instead of re-running inference like
+    the master_auditor.ipynb version did.
+    """
+    groups = {}
+    for e in entries:
+        groups.setdefault((e['method'], e['epoch']), []).append(e['pth_path'])
+
+    def sort_key(key):
+        method, epoch = key
+        if method == 'base':
+            return (-2, '', epoch)
+        if method == 'retrain':
+            return (-1, '', epoch)
+        return (0, method, epoch)
+    ordered_keys = sorted(groups.keys(), key=sort_key)
+
+    share_means, share_stds = {}, {}
+    for key in ordered_keys:
+        run_shares = []
+        for pth_path in groups[key]:
+            out = torch.load(pth_path, map_location="cpu", weights_only=False)
+            preds = out["forget"]["probs"].argmax(dim=1).numpy()
+            counts = np.bincount(preds, minlength=num_classes)
+            run_shares.append(counts / preds.shape[0])
+        run_shares = np.stack(run_shares)
+        share_means[key] = run_shares.mean(axis=0)
+        share_stds[key] = run_shares.std(axis=0) if len(run_shares) > 1 else np.zeros(num_classes)
+
+    x = np.arange(num_classes)
+    n_models = len(ordered_keys)
+    width = 0.8 / max(n_models, 1)
+
+    plt.clf()
+    sns.set_style("whitegrid")
+    sns.set_context("notebook", font_scale=1.35)
+    fig, ax = plt.subplots(figsize=(max(12, n_models * 1.1), 5))
+    for i, key in enumerate(ordered_keys):
+        method, _ = key
+        offset = (i - (n_models - 1) / 2) * width
+        if method == 'base':
+            color = base_color
+        elif method == 'retrain':
+            color = retain_color
+        else:
+            color = _method_color(method)
+        ax.bar(
+            x + offset, share_means[key], width, yerr=share_stds[key],
+            capsize=2, error_kw=dict(elinewidth=0.8, ecolor="#333"),
+            label=method, color=color,
+        )
+
+    ax.set_ylabel("Share of Samples")
+    # ax.set_title(title)
+    ax.set_xticks(x)
+    ax.legend(fontsize=8, ncol=min(n_models, 5), loc="upper center", bbox_to_anchor=(0.5, -0.15))
+    plt.tight_layout()
+    _save_or_show(fig, save_path)
+
+
+def _infer_num_classes(results_folder, entries):
+    config_path = os.path.join(results_folder, "experiment_config.json")
+    if os.path.exists(config_path):
+        with open(config_path) as fh:
+            config = json.load(fh)
+        num_classes = config.get("data", {}).get("num_classes")
+        if num_classes is not None:
+            return num_classes
+    out = torch.load(entries[0]['pth_path'], map_location="cpu", weights_only=False)
+    return out["forget"]["probs"].shape[1]
+
+
+def run_prediction_distribution_chart(results_folder, plots_folder):
+    entries = discover_out_pth_files(results_folder)
+    if not entries:
+        print(f"[master_results] no *_out.pth files found under {results_folder}, skipping prediction distribution chart")
+        return
+    entries = _latest_epoch_per_method(entries)
+    num_classes = _infer_num_classes(results_folder, entries)
+    save_path = os.path.join(plots_folder, "prediction_distribution_forget.png")
+    try:
+        prediction_distribution_chart(entries, num_classes, save_path=save_path)
+    except Exception as e:
+        print(f"[master_results] skipped prediction distribution chart: {e}")
+
+
 def _method_legend_entries(base_color, retain_color, base_marker, retain_marker):
     """(label, color, marker) triples for base, retrain, then every UNLEARNING_METHODS entry."""
     entries = [("base", base_color, base_marker), ("retrain", retain_color, retain_marker)]
@@ -889,6 +1032,7 @@ def main():
     os.makedirs(PLOTS_FOLDER, exist_ok=True)
     run_barplots(results, PLOTS_FOLDER)
     run_scatterplots(results, PLOTS_FOLDER)
+    run_prediction_distribution_chart(RESULTS_FOLDER, PLOTS_FOLDER)
     plot_method_legend_vertical(PLOTS_FOLDER)
     plot_method_legend_horizontal(PLOTS_FOLDER)
     print(f"[master_results] done. plots saved under {PLOTS_FOLDER}")

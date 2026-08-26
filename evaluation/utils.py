@@ -185,7 +185,7 @@ def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = Fals
 
 
 
-def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_class, training_hp, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None, compute_fisher = False, bound_info = None, fisher_chunk_size = 32, forget_set_type = None, unlearning_item = None):
+def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_class, training_hp, retrain_out_path = None, bad_teacher = None, base_out_path = None, num_classes = None, retrain_model = None, base_model = None, compute_fisher = False, bound_info = None, fisher_chunk_size = 32, forget_set_type = None, unlearning_item = None, measure_relearn_time = True):
     """
     Measure ALL unlearning metrics, including those which require a reference model for comparison
 
@@ -339,17 +339,20 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_
 
         main_results["residual_information"] = residual_information
 
-    print("Measuring relearn time...\n")
-    main_results["relearn_time"] = relearn_time(
-        model = model,
-        dataloaders = dataloaders,
-        base_out = base_out,
-        model_class = model_class,
-        num_classes = num_classes,
-        device = device,
-        seed = seed,
-        training_hp = training_hp,
-    )
+
+    if measure_relearn_time:
+
+        print("Measuring relearn time...\n")
+        main_results["relearn_time"] = relearn_time(
+            model = model,
+            dataloaders = dataloaders,
+            base_out = base_out,
+            model_class = model_class,
+            num_classes = num_classes,
+            device = device,
+            seed = seed,
+            training_hp = training_hp,
+        )
 
     return main_results, main_out
     

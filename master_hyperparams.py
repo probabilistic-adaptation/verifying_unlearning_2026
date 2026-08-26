@@ -128,11 +128,14 @@ base = {
                 # whole retain set (they report better retain acc with more retain data, and all other methods use full retain loader)
                 "opt": "Adam",
                 "lr": 0, # this is just a dummy so that Adam can be initialized - the lr is eventually overwritten by either of the ones below
-                "lr_impair": .01, # they also report good results with .01, original is .02
-                "lr_repair": .01, # originally fixed to 0.01 in their paper
+                # we had to lower both the impair and repair lr
+                # higher impair lr causes too aggressive impairment
+                # higher repair li causes catastrophic weight jumps
+                "lr_impair": .001, # was .01, they also report good results with .01, original is .02
+                "lr_repair": .001, # was .01, originally fixed to 0.01 in their paper
                 "impair_epochs": 1, # they report 1 epoch of impair is enough
-                "num_epochs": 10, # they report better retain acc for 2 epochs instead of 1, with no demonstrable increase at 3
-                "save_checkpoints_at": [1, 10],
+                "num_epochs": 2, # they report better retain acc for 2 epochs instead of 1, with no demonstrable increase at 3
+                "save_checkpoints_at": [1, 2],
             }
             }
         }

@@ -1,5 +1,5 @@
 {
-    "description": "Official run, seed 4, class unlearning with ResNet18 on CIFAR10",
+    "description": "Adding better UNSIR implementation to seed 4",
     "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "class",
@@ -27,15 +27,9 @@
     },
     "unlearning": {
         "methods": [
-            "FT",
-            "GA",
-            "NegGrad_plus",
-            "RL",
-            "boundary_shrink",
-            "bad_teacher",
-            "scrub",
             "UNSIR"
         ],
+        "measure_relearn_time": true,
         "FT": {
             "print_freq": 8,
             "lr": 0.01,
@@ -148,13 +142,13 @@
             "noise_train_epochs": 5,
             "opt": "Adam",
             "lr": 0,
-            "lr_impair": 0.01,
-            "lr_repair": 0.01,
+            "lr_impair": 0.001,
+            "lr_repair": 0.001,
             "impair_epochs": 1,
-            "num_epochs": 10,
+            "num_epochs": 2,
             "save_checkpoints_at": [
                 1,
-                10
+                2
             ]
         }
     },
