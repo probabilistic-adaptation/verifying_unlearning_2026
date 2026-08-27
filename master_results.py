@@ -22,14 +22,14 @@ from matplotlib.lines import Line2D
 # CONFIG
 # ============================================================
 
-SEED = 4
+SEED = 5
 
 RESULTS_FOLDER = f"results/seed_{SEED}"
 PLOTS_FOLDER = f"{RESULTS_FOLDER}/plots"
 
 # used only to discover which metrics exist in a "typical" results.json, so we
 # know what to barplot by default
-REFERENCE_RESULT_FILE = f"{RESULTS_FOLDER}/unlearn/run_1/FT/epoch_30/class_5.json"
+REFERENCE_RESULT_FILE = f"{RESULTS_FOLDER}/unlearn/run_1/FT/epoch_30/random_0.1.json"
 
 # gather_results filters -- None means "no filter"
 EPOCHS = None

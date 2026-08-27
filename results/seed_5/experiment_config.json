@@ -1,5 +1,5 @@
 {
-    "description": "Official run seed 5 - random forgetting, CIFAR10, ResNet18",
+    "description": "Official seed 5",
     "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "random",
@@ -29,12 +29,14 @@
         "methods": [
             "FT",
             "GA",
-            "NegGrad+",
+            "NegGrad_plus",
             "RL",
             "boundary_shrink",
             "bad_teacher",
-            "scrub"
+            "scrub",
+            "UNSIR"
         ],
+        "measure_relearn_time": true,
         "FT": {
             "print_freq": 8,
             "lr": 0.01,
@@ -147,13 +149,13 @@
             "noise_train_epochs": 5,
             "opt": "Adam",
             "lr": 0,
-            "lr_impair": 0.01,
-            "lr_repair": 0.01,
+            "lr_impair": 0.001,
+            "lr_repair": 0.001,
             "impair_epochs": 1,
-            "num_epochs": 20,
+            "num_epochs": 2,
             "save_checkpoints_at": [
-                10,
-                20
+                1,
+                2
             ]
         }
     },
