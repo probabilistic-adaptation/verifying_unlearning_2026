@@ -31,9 +31,11 @@ def relearn_time(model, dataloaders, base_out, model_class, num_classes, device,
 
     MAX_EPOCHS = 30 # for now, while trouble shooting
     NUM_RUNS = 3 # maybe increase this later, taking a long time
-    THRESHOLD = 0.2
+    THRESHOLD = 0.5
     target_loss = base_out["forget"]["avg_loss"]
+    threshold_loss = target_loss * (1 + THRESHOLD)
     print(f"target_loss: {target_loss:.4f}")
+    print(f"threshold_loss (must drop to/below this to count as converged): {threshold_loss:.4f}")
 
     forget_loader = dataloaders["forget"]
     full_train_dataset = ConcatDataset([forget_loader.dataset, dataloaders["retain"].dataset])
@@ -66,7 +68,7 @@ def relearn_time(model, dataloaders, base_out, model_class, num_classes, device,
 
         # changing opt hyperparams to be standard lr = 1e-4. no weight_decay
         # opt = torch.optim.Adam(relearn_model.parameters(), lr=training_hp["learning_rate"], weight_decay=training_hp.get("weight_decay", 0))
-        opt = torch.optim.Adam(relearn_model.parameters(), lr=5e-5)
+        opt = torch.optim.Adam(relearn_model.parameters(), lr=1e-5)
 
         # a model that's already within THRESHOLD (above) or better than the original forget-set
         # loss needs 0 epochs of relearning -- only an above-target loss counts as "not converged",

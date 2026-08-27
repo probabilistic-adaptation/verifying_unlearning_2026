@@ -732,7 +732,7 @@ def run_barplots(results, plots_folder):
     print(f"[master_results] discovered {len(metrics)} metrics to barplot from {REFERENCE_RESULT_FILE}")
     out_folder = os.path.join(plots_folder, "barplots")
     for metric in metrics:
-        save_path = os.path.join(out_folder, f"{_safe_filename(metric)}.png")
+        save_path = os.path.join(out_folder, f"{_safe_filename(metric)}.svg")
         try:
             results_barplot(
                 results,
@@ -754,7 +754,7 @@ def run_scatterplots(results, plots_folder):
             subfolder = "grouped" if grouped else "ungrouped"
             save_path = os.path.join(
                 out_folder, subfolder,
-                f"{_safe_filename(x_metric)}__vs__{_safe_filename(y_metric)}.png"
+                f"{_safe_filename(x_metric)}__vs__{_safe_filename(y_metric)}.svg"
             )
             try:
                 results_scatterplot(
@@ -904,7 +904,7 @@ def run_prediction_distribution_chart(results_folder, plots_folder):
         return
     entries = _latest_epoch_per_method(entries)
     num_classes = _infer_num_classes(results_folder, entries)
-    save_path = os.path.join(plots_folder, "prediction_distribution_forget.png")
+    save_path = os.path.join(plots_folder, "prediction_distribution_forget.svg")
     try:
         prediction_distribution_chart(entries, num_classes, save_path=save_path)
     except Exception as e:
@@ -939,7 +939,7 @@ def plot_method_legend_vertical(plots_folder,
     fig, ax = plt.subplots(figsize=(3, 0.4 * len(entries) + 0.5))
     ax.axis("off")
     ax.legend(handles=handles, loc="center", frameon=False, title="Method", fontsize=11, title_fontsize=12)
-    save_path = os.path.join(plots_folder, "method_legend_vertical.png")
+    save_path = os.path.join(plots_folder, "method_legend_vertical.svg")
     _save_or_show(fig, save_path)
 
 
@@ -1017,7 +1017,7 @@ def plot_method_legend_horizontal(plots_folder,
             ax.text(x, y, label, fontsize=fontsize, va="center", ha="left")
             x += label_w_in + entry_gap
 
-    save_path = os.path.join(plots_folder, "method_legend_horizontal.png")
+    save_path = os.path.join(plots_folder, "method_legend_horizontal.svg")
     fig.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
