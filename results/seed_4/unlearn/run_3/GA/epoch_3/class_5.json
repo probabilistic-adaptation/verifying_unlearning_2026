@@ -195,7 +195,7 @@
     },
     "relearn_time": {
         "epochs_per_run": [
-            21,
+            1,
             1,
             2
         ],
@@ -204,7 +204,7 @@
             true,
             true
         ],
-        "avg_epochs": 8.0
+        "avg_epochs": 1.3333333333333333
     },
     "type": "unlearn",
     "epoch": 3,

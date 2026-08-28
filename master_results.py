@@ -22,14 +22,14 @@ from matplotlib.lines import Line2D
 # CONFIG
 # ============================================================
 
-SEED = 5
+SEED = 4
 
 RESULTS_FOLDER = f"results/seed_{SEED}"
 PLOTS_FOLDER = f"{RESULTS_FOLDER}/plots"
 
 # used only to discover which metrics exist in a "typical" results.json, so we
 # know what to barplot by default
-REFERENCE_RESULT_FILE = f"{RESULTS_FOLDER}/unlearn/run_1/FT/epoch_30/random_0.1.json"
+REFERENCE_RESULT_FILE = f"{RESULTS_FOLDER}/unlearn/run_1/FT/epoch_30/class_5.json"
 
 # gather_results filters -- None means "no filter"
 EPOCHS = None
@@ -66,11 +66,16 @@ SCATTERPLOT_PAIRS = [
          title="Forget accuracy vs. Test accuracy", color_by="method", line=0,
          xlabel = "Forget accuracy", ylabel = "Test accuracy"),
 
-    dict(x_metric="forget_acc",
-         y_metric="forgotten_class_fraction",
-         title="Forget accuracy vs. Forgotten class share", color_by="method", line=0,
-         xlabel = "Forget accuracy", ylabel = "Forgotten class share"),
+    dict(x_metric="retain_acc", 
+         y_metric="test_acc",
+        #  title="Retain accuracy vs. Test accuracy", 
+         color_by="method", line=0,
+         xlabel = "Retain accuracy", ylabel = "Test accuracy"),
 
+    dict(x_metric="test_acc",
+         y_metric="forgotten_class_fraction",
+         title="Test accuracy vs. Forgotten class share", color_by="method", line=0,
+         xlabel = "Test accuracy", ylabel = "Forgotten class share"),
 
 
     # ----------------
@@ -133,6 +138,34 @@ SCATTERPLOT_PAIRS = [
         #  title="Threshold MIA: attack efficacy vs. accuracy", 
          color_by="method", line=0,
          xlabel = "Efficacy", ylabel = "Forgetting rate"),
+
+
+    # for adding to the list
+
+    dict(x_metric="forget_acc", 
+         y_metric="threshold_MIA.efficacy",
+         color_by="method", line=0,
+         xlabel = "Forget accuracy", ylabel = "MIA efficacy"),
+
+    dict(x_metric="retain_acc", 
+         y_metric="threshold_MIA.efficacy",
+         color_by="method", line=0,
+         xlabel = "Forget accuracy", ylabel = "MIA efficacy"),
+
+    dict(x_metric="test_acc", 
+         y_metric="threshold_MIA.efficacy",
+         color_by="method", line=0,
+         xlabel = "Forget accuracy", ylabel = "MIA efficacy"),
+
+    dict(x_metric="forgotten_class_fraction", 
+         y_metric="threshold_MIA.efficacy",
+         color_by="method", line=0,
+         xlabel = "Forget accuracy", ylabel = "MIA efficacy"),
+
+    dict(x_metric="forget_entropy", 
+         y_metric="threshold_MIA.efficacy",
+         color_by="method", line=0,
+         xlabel = "Forget accuracy", ylabel = "MIA efficacy"),
 
 
 
@@ -220,6 +253,13 @@ SCATTERPLOT_PAIRS = [
          xlabel = "ToW", ylabel = "ToW_MIA"),
 
 
+    dict(x_metric="ToW",
+         y_metric="threshold_MIA.efficacy",
+        #  title="ToW vs. ToW_MIA", 
+         color_by="method", line=0,
+         xlabel = "ToW", ylabel = "threshold MIA efficacy"),
+
+
     # ----------------------------------------
     # ------------ Performance Differences ---
     # ----------------------------------------
@@ -245,6 +285,38 @@ SCATTERPLOT_PAIRS = [
          xlabel = "Forget entropy", ylabel = "Retain entropy"),
 
 
+    # extra
+
+    dict(x_metric="forget_acc", 
+         y_metric="forget_entropy",
+         title="Forget accuracy vs. Forget entropy", color_by="method", 
+         xlabel = "Forget accuracy", ylabel = "Forget entropy"),
+
+    dict(x_metric="forget_acc", 
+         y_metric="forget_m_entropy",
+         title="Forget accuracy vs. Forget m-entropy", color_by="method", 
+         xlabel = "Forget accuracy", ylabel = "Forget m-entropy"),
+
+    dict(x_metric="retain_acc", 
+         y_metric="retain_entropy",
+         title="Retain accuracy vs. Retain entropy", color_by="method", 
+         xlabel = "Retain accuracy", ylabel = "Retain entropy"),
+
+    dict(x_metric="retain_acc", 
+         y_metric="retain_m_entropy",
+         title="Retain accuracy vs. Retain m-entropy", color_by="method", 
+         xlabel = "Retain accuracy", ylabel = "Retain m-entropy"),
+
+    dict(x_metric="test_acc", 
+         y_metric="test_entropy",
+         title="Test accuracy vs. Test entropy", color_by="method", 
+         xlabel = "Test accuracy", ylabel = "Test entropy"),
+
+    dict(x_metric="test_acc", 
+         y_metric="test_m_entropy",
+         title="Test accuracy vs. Test m-entropy", color_by="method", 
+         xlabel = "Test accuracy", ylabel = "Test m-entropy"),
+
     # ----------------
     # -- output diffs and divergences
     # ----------------
@@ -267,6 +339,10 @@ SCATTERPLOT_PAIRS = [
          xlabel = "L2 distance", ylabel = "JS divergence"),
 
 
+    dict(x_metric="forget_acc",
+         y_metric="outputs.retrain_vs_unlearned.forget.absolute_distance",
+         title="Forget accuaracy vs. Absolute distance on forget set outputs, retrain vs. unlearned", color_by="method",
+         xlabel = "Forget accuracy", ylabel = "Absolute distance"),
 
 
 
@@ -275,6 +351,39 @@ SCATTERPLOT_PAIRS = [
          y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
          title="JS divergence (unlearned vs. retrained) vs. ZRF-score", color_by="method",
          xlabel = "JS divergence", ylabel = "ZRF-score"),
+
+
+    dict(x_metric="forget_acc",
+         y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
+        #  title="JS divergence (unlearned vs. retrained) vs. ZRF-score", 
+         color_by="method",
+         xlabel = "Forget accuracy", ylabel = "ZRF-score"),
+
+    dict(x_metric="retain_acc",
+         y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
+        #  title="JS divergence (unlearned vs. retrained) vs. ZRF-score", 
+         color_by="method",
+         xlabel = "Retain accuracy", ylabel = "ZRF-score"),
+
+    dict(x_metric="test_acc",
+         y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
+        #  title="JS divergence (unlearned vs. retrained) vs. ZRF-score", 
+         color_by="method",
+         xlabel = "Test accuracy", ylabel = "ZRF-score"),
+
+    dict(x_metric="forget_entropy",
+         y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
+        #  title="JS divergence (unlearned vs. retrained) vs. ZRF-score", 
+         color_by="method",
+         xlabel = "Forget entropy", ylabel = "ZRF-score"),
+
+    dict(x_metric="threshold_MIA.efficacy",
+         y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
+        #  title="JS divergence (unlearned vs. retrained) vs. ZRF-score", 
+         color_by="method",
+         xlabel = "Threshold_MIA.efficacy", ylabel = "ZRF-score"),
+
+
 
 
 

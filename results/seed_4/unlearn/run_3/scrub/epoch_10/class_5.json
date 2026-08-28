@@ -197,14 +197,14 @@
         "epochs_per_run": [
             30,
             30,
-            26
+            30
         ],
         "converged_per_run": [
             false,
             false,
-            true
+            false
         ],
-        "avg_epochs": 28.666666666666668
+        "avg_epochs": 30.0
     },
     "type": "unlearn",
     "epoch": 10,

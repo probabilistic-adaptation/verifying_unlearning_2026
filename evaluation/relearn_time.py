@@ -74,6 +74,7 @@ def relearn_time(model, dataloaders, base_out, model_class, num_classes, device,
         # loss needs 0 epochs of relearning -- only an above-target loss counts as "not converged",
         # since a lower loss than target is strictly better, not a failure to converge
         current_loss = naive_validate(forget_loader, relearn_model, criterion=criterion, device=device)
+        print(f"Starting loss: {current_loss:.4f}")
         converged = current_loss <= target_loss * (1 + THRESHOLD)
         epoch = 0
 
