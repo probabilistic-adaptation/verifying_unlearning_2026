@@ -427,6 +427,13 @@ SCATTERPLOT_PAIRS = [
          xlabel = "Wasserstein distance", ylabel = "KS statistic"),
 
 
+    dict(x_metric="outputs.unlearned.forget_vs_test.wasserstein_distance",
+             y_metric="forget_m_entropy",
+            #  title="Wasserstein distance vs. KS statistic on cross-entropy losses, forget vs. test", 
+             color_by="method", line=0,
+             xlabel = "Wasserstein distance", ylabel = "Forget m-entropy"),
+
+
 
 
 
