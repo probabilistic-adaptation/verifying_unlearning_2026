@@ -28,11 +28,11 @@ base = {
                 "print_freq": 1,
 
                 # Jia et al 2024
-                "lr": 2e-4, # anything higher than this results in calamitous model utility, any lower (1e-4 from jia et al 2024) and the model doesnt unlearn anything within 5 epochs
+                "lr": 2e-3, # 2e-4, # anything higher than this results in calamitous model utility, any lower (1e-4 from jia et al 2024) and the model doesnt unlearn anything within 5 epochs
                 "opt": "SGD",
                 "weight_decay": 5e-4, # this is actually not from the paper, we borrow this in keeping with other weight decay applied in Golatkar et al 2020a
                 "num_epochs": 5,
-                "save_checkpoints_at": [3, 5],
+                "save_checkpoints_at": [1, 2], # it will have slightly better unlearned than before by epoch 2 # [3, 5] for class
             },
             "NegGrad_plus": {
                 "print_freq": 8,
@@ -41,9 +41,9 @@ base = {
                 "lr": .01,
                 "opt": "SGD",
                 "weight_decay": 5e-4,
-                "num_epochs": 10,
-                "save_checkpoints_at": [5, 10],
-                "alpha": 0.999 # Kurmanji et al 2023 use 0.95, but that causes calamitous model collapse
+                "num_epochs": 2, # 10,
+                "save_checkpoints_at": [1, 2], # [5, 10],
+                "alpha": .7 # 0.999 for class # Kurmanji et al 2023 use 0.95, but that causes calamitous model collapse
                 },
 
             "RL": {
@@ -54,7 +54,7 @@ base = {
                 "opt": "SGD",
                 "weight_decay": 5e-4,
                 "num_epochs": 10,
-                "save_checkpoints_at": [5, 10],
+                "save_checkpoints_at": [1, 2], # [5, 10] for class
                 },
             
             "fisher": {
@@ -70,9 +70,9 @@ base = {
                 "print_freq": 1,
                 
                 # Fan et al 2024
-                "lr": 1e-5,
+                "lr": 5e-5, # 1e-5,
                 "num_epochs": 10,
-                "save_checkpoints_at": [5, 10],
+                "save_checkpoints_at": [2, 3], # [5, 10],
                 "bound": 0.1,
                 "opt": "SGD",
             },
@@ -90,7 +90,7 @@ base = {
                 "print_freq": 3,
                 
                 # chundawat et al 2023 (original paper)
-                "lr": 1e-4, 
+                "lr": 1e-3, # 1e-4 for class,
                 "num_epochs": 2,
                 "save_checkpoints_at": [1, 2],
                 "opt": "Adam",
@@ -106,12 +106,12 @@ base = {
                 # Kurmanji et al 2023,
                 "opt": "Adam",
                 "weight_decay": 5e-4,
-                "lr": 5e-4,
+                "lr": 1e-3, # 5e-4,
                 # "lr_decay_by": .1, we're going to try cosine annealing, for consistency with our pretraining and retrain from scratch protocol # UPDATE, i am worried cosine annealing isnt good, gonna cut by .1 after epoch 1 and see what happens
-                "num_epochs": 10, # original paper gives 3, but im finding retain and test acc dont improve enough by the end
+                "num_epochs": 2, # 10, # original paper gives 3, but im finding retain and test acc dont improve enough by the end
                 "maxsteps": 1,
-                "save_checkpoints_at": [5, 10],
-                "forget_batch_size": 512,
+                "save_checkpoints_at": [1, 2], # [5, 10],
+                "forget_batch_size": 1024, # 512,
                 "retain_batch_size": 128,
                 'T': 2,
                 'lr_decay_epochs': [5, 8, 9],

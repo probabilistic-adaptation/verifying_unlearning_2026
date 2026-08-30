@@ -22,14 +22,17 @@ from matplotlib.lines import Line2D
 # CONFIG
 # ============================================================
 
-SEED = 4
+SEED = 5
 
 RESULTS_FOLDER = f"results/seed_{SEED}"
 PLOTS_FOLDER = f"{RESULTS_FOLDER}/plots"
 
 # used only to discover which metrics exist in a "typical" results.json, so we
 # know what to barplot by default
-REFERENCE_RESULT_FILE = f"{RESULTS_FOLDER}/unlearn/run_1/FT/epoch_30/class_5.json"
+_REFERENCE_RESULT_DIR = f"{RESULTS_FOLDER}/unlearn/run_1/FT/epoch_30"
+REFERENCE_RESULT_FILE = f"{_REFERENCE_RESULT_DIR}/" + sorted(
+    f for f in os.listdir(_REFERENCE_RESULT_DIR) if f.endswith(".json")
+)[0]
 
 # gather_results filters -- None means "no filter"
 EPOCHS = None
@@ -72,10 +75,10 @@ SCATTERPLOT_PAIRS = [
          color_by="method", line=0,
          xlabel = "Retain accuracy", ylabel = "Test accuracy"),
 
-    dict(x_metric="test_acc",
+    dict(x_metric="forget_acc",
          y_metric="forgotten_class_fraction",
-         title="Test accuracy vs. Forgotten class share", color_by="method", line=0,
-         xlabel = "Test accuracy", ylabel = "Forgotten class share"),
+         title="Forget accuracy vs. Forgotten class share", color_by="method", line=0,
+         xlabel = "Forget accuracy", ylabel = "Forgotten class share"),
 
 
     # ----------------
@@ -150,23 +153,27 @@ SCATTERPLOT_PAIRS = [
     dict(x_metric="retain_acc", 
          y_metric="threshold_MIA.efficacy",
          color_by="method", line=0,
-         xlabel = "Forget accuracy", ylabel = "MIA efficacy"),
+         xlabel = "Retain accuracy", ylabel = "MIA efficacy"),
 
     dict(x_metric="test_acc", 
          y_metric="threshold_MIA.efficacy",
          color_by="method", line=0,
-         xlabel = "Forget accuracy", ylabel = "MIA efficacy"),
+         xlabel = "Test accuracy", ylabel = "MIA efficacy"),
 
     dict(x_metric="forgotten_class_fraction", 
          y_metric="threshold_MIA.efficacy",
          color_by="method", line=0,
-         xlabel = "Forget accuracy", ylabel = "MIA efficacy"),
+         xlabel = "Forgotten class share", ylabel = "MIA efficacy"),
 
     dict(x_metric="forget_entropy", 
          y_metric="threshold_MIA.efficacy",
          color_by="method", line=0,
-         xlabel = "Forget accuracy", ylabel = "MIA efficacy"),
+         xlabel = "Forget entropy", ylabel = "MIA efficacy"),
 
+    dict(x_metric="relearn_time.avg_epochs", 
+         y_metric="threshold_MIA.efficacy",
+         color_by="method", line=0,
+         xlabel = "Relearn time", ylabel = "MIA efficacy"),
 
 
     # ----------------
@@ -460,12 +467,18 @@ SCATTERPLOT_PAIRS = [
     dict(x_metric="forget_acc",
          y_metric="weight_differences.retrain_vs_unlearned.l2_distance",
          title="Forget accuracy vs. weight L2-distance (retrain-vs-unlearned)", color_by="method",
-         xlabel = "Forget accuracy", ylabel = "weight L2-distance (retrain-vs-unlearned)"),
+         xlabel = "Forget accuracy", ylabel = "Weight L2-distance (retrain-vs-unlearned)"),
 
     dict(x_metric="forget_acc",
          y_metric="weight_differences.original_vs_unlearned.l2_distance",
          title="Forget accuracy vs. weight L2-distance (original -vs-unlearned)", color_by="method",
-         xlabel = "Forget accuracy", ylabel = "weight L2-distance (original-vs-unlearned)"),
+         xlabel = "Forget accuracy", ylabel = "Weight L2-distance (original-vs-unlearned)"),
+
+    dict(x_metric="relearn_time.avg_epochs",
+         y_metric="weight_differences.original_vs_unlearned.l2_distance",
+        #  title="Forget accuracy vs. weight L2-distance (original -vs-unlearned)", 
+         color_by="method",
+         xlabel = "Relearn time", ylabel = "Weight L2-distance (original-vs-unlearned)"),
 ]
 
 
