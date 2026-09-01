@@ -22,7 +22,7 @@ from matplotlib.lines import Line2D
 # CONFIG
 # ============================================================
 
-SEED = 5
+SEED = 4
 
 RESULTS_FOLDER = f"results/seed_{SEED}"
 PLOTS_FOLDER = f"{RESULTS_FOLDER}/plots"
@@ -165,15 +165,20 @@ SCATTERPLOT_PAIRS = [
          color_by="method", line=0,
          xlabel = "Forgotten class share", ylabel = "MIA efficacy"),
 
-    dict(x_metric="forget_entropy", 
-         y_metric="threshold_MIA.efficacy",
-         color_by="method", line=0,
-         xlabel = "Forget entropy", ylabel = "MIA efficacy"),
+    # dict(x_metric="forget_entropy", 
+    #      y_metric="threshold_MIA.efficacy",
+    #      color_by="method", line=0,
+    #      xlabel = "Forget entropy", ylabel = "MIA efficacy"),
 
     dict(x_metric="relearn_time.avg_epochs", 
          y_metric="threshold_MIA.efficacy",
          color_by="method", line=0,
          xlabel = "Relearn time", ylabel = "MIA efficacy"),
+
+    dict(x_metric="forget_m_entropy", 
+         y_metric="threshold_MIA.efficacy",
+         color_by="method", line=0,
+         xlabel = "Forget m-entropy", ylabel = "MIA efficacy"),
 
 
     # ----------------
@@ -245,9 +250,9 @@ SCATTERPLOT_PAIRS = [
     # ----------------
 
     dict(x_metric="total_unlearning_time_up_to_now", 
-         y_metric="forget_acc",
-         title="Run-time efficiency vs. Forget accuracy", color_by="method", line=0,
-         xlabel = "Run-time efficiency", ylabel = "Forget accuracy"),
+         y_metric="forget_m_entropy",
+         title="Run-time efficiency vs. Forget m-entropy", color_by="method", line=0,
+         xlabel = "Run-time efficiency", ylabel = "Forget m-entropy"),
 
 
     # ----------------
@@ -324,6 +329,21 @@ SCATTERPLOT_PAIRS = [
          title="Test accuracy vs. Test m-entropy", color_by="method", 
          xlabel = "Test accuracy", ylabel = "Test m-entropy"),
 
+    dict(x_metric="forget_m_entropy", 
+         y_metric="retain_acc",
+         title="Forget m-entropy vs. Retain accuracy", color_by="method", 
+         xlabel = "Forget m-entropy", ylabel = "Retain accuracy"),
+
+    dict(x_metric="forget_m_entropy", 
+         y_metric="test_acc",
+         title="Forget m-entropy vs. Test accuracy", color_by="method", 
+         xlabel = "Forget m-entropy", ylabel = "Test accuracy"),
+
+    dict(x_metric="test_m_entropy", 
+         y_metric="forget_m_entropy",
+         title="Test m-entropy vs. Forget m-entropy", color_by="method", 
+         xlabel = "Test m-entropy", ylabel = "Forget m-entropy"),
+
     # ----------------
     # -- output diffs and divergences
     # ----------------
@@ -346,13 +366,15 @@ SCATTERPLOT_PAIRS = [
          xlabel = "L2 distance", ylabel = "JS divergence"),
 
 
-    dict(x_metric="forget_acc",
+    dict(x_metric="forget_m_entropy",
          y_metric="outputs.retrain_vs_unlearned.forget.absolute_distance",
-         title="Forget accuaracy vs. Absolute distance on forget set outputs, retrain vs. unlearned", color_by="method",
-         xlabel = "Forget accuracy", ylabel = "Absolute distance"),
+         title="Forget m-entropy vs. Absolute distance on forget set outputs, retrain vs. unlearned", color_by="method",
+         xlabel = "Forget m-entropy", ylabel = "Absolute distance"),
 
 
-
+    # ----------------
+    # -- ZRF-score
+    # ----------------
 
     dict(x_metric="outputs.retrain_vs_unlearned.forget.JS_divergence",
          y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
@@ -360,11 +382,11 @@ SCATTERPLOT_PAIRS = [
          xlabel = "JS divergence", ylabel = "ZRF-score"),
 
 
-    dict(x_metric="forget_acc",
+    dict(x_metric="forget_m_entropy",
          y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
         #  title="JS divergence (unlearned vs. retrained) vs. ZRF-score", 
          color_by="method",
-         xlabel = "Forget accuracy", ylabel = "ZRF-score"),
+         xlabel = "Forget m-entropy", ylabel = "ZRF-score"),
 
     dict(x_metric="retain_acc",
          y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
@@ -378,11 +400,11 @@ SCATTERPLOT_PAIRS = [
          color_by="method",
          xlabel = "Test accuracy", ylabel = "ZRF-score"),
 
-    dict(x_metric="forget_entropy",
+    dict(x_metric="relearn_time.avg_epochs",
          y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
         #  title="JS divergence (unlearned vs. retrained) vs. ZRF-score", 
          color_by="method",
-         xlabel = "Forget entropy", ylabel = "ZRF-score"),
+         xlabel = "Relearn time", ylabel = "ZRF-score"),
 
     dict(x_metric="threshold_MIA.efficacy",
          y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
@@ -413,35 +435,30 @@ SCATTERPLOT_PAIRS = [
          xlabel = "Normalized confusion distance", ylabel = "Prediction distribution difference"),
 
 
-    dict(x_metric="forget_acc",
+    dict(x_metric="forget_m_entropy",
          y_metric="outputs.retrain_vs_unlearned.forget.prediction_distribution_diff",
-         title="Forget accuracy vs. Prediction distribution difference (unlearned vs. retrained)", color_by="method",
-         xlabel = "Forget accuracy", ylabel = "Prediction distribution difference"),
+         title="Forget m-entropy vs. Prediction distribution difference (unlearned vs. retrained)", color_by="method",
+         xlabel = "Forget m-entropy", ylabel = "Prediction distribution difference"),
 
-    dict(x_metric="forget_acc",
+    dict(x_metric="forget_m_entropy",
          y_metric="outputs.retrain_vs_unlearned.forget.normalized_confusion_distance",
-         title="Forget accuracy vs. Normalized confusion distance (unlearned vs. retrained)", color_by="method",
-         xlabel = "Forget accuracy", ylabel = "Normalized confusion distance"),
+         title="Forget m-entropy vs. Normalized confusion distance (unlearned vs. retrained)", color_by="method",
+         xlabel = "Forget m-entropy", ylabel = "Normalized confusion distance"),
 
 
 
 
 
-
-    dict(x_metric="outputs.unlearned.forget_vs_test.wasserstein_distance",
-         y_metric="outputs.unlearned.forget_vs_test.ks_statistics",
-         title="Wasserstein distance vs. KS statistic on cross-entropy losses, forget vs. test", color_by="method", line=0,
-         xlabel = "Wasserstein distance", ylabel = "KS statistic"),
-
-
-    dict(x_metric="outputs.unlearned.forget_vs_test.wasserstein_distance",
-             y_metric="forget_m_entropy",
+    dict(x_metric="forget_m_entropy",
+             y_metric="outputs.unlearned.forget_vs_test.wasserstein_distance",
             #  title="Wasserstein distance vs. KS statistic on cross-entropy losses, forget vs. test", 
              color_by="method", line=0,
-             xlabel = "Wasserstein distance", ylabel = "Forget m-entropy"),
+             xlabel = "Forget m-entropy", ylabel = "Wasserstein distance"),
 
-
-
+    dict(x_metric="forget_acc",
+         y_metric="outputs.unlearned.forget_vs_test.ks_statistics",
+         title="Forget accuracy vs. KS statistic on cross-entropy losses, forget vs. test", color_by="method", line=0,
+         xlabel = "Forget accuracy", ylabel = "KS statistic"),
 
 
     # ----------------------------------------
@@ -453,6 +470,12 @@ SCATTERPLOT_PAIRS = [
          y_metric="relearn_time.avg_epochs",
          title="Forget accuracy vs. Relearn time", color_by="method", line=0,
          xlabel = "Forget accuracy", ylabel = "Relearn time"),
+
+
+   dict(x_metric="forget_m_entropy",
+         y_metric="relearn_time.avg_epochs",
+         title="Forget m-entropy vs. Relearn time", color_by="method", line=0,
+         xlabel = "Forget m-entropy", ylabel = "Relearn time"),
 
 
     # ----------------

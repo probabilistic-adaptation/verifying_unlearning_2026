@@ -1,0 +1,156 @@
+{
+    "description": "testing new hyperparams for random unlearning",
+    "device": "mps",
+    "model_class": "ResNet",
+    "unlearning_type": "random",
+    "num_runs": 1,
+    "measure_base_results": false,
+    "measure_retrain_results": false,
+    "data": {
+        "dataset": "CIFAR10",
+        "num_classes": 10,
+        "batch_size": 512,
+        "num_workers": 4,
+        "item_to_unlearn": 0.1
+    },
+    "training": {
+        "num_epochs": 100,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_print_freq": 5,
+        "pretrained_seed": 4,
+        "retrained_from_scratch_seeds": {
+            "class": 4,
+            "random": 5,
+            "random_uniform": 6
+        }
+    },
+    "unlearning": {
+        "methods": [
+            "scrub"
+        ],
+        "measure_relearn_time": false,
+        "FT": {
+            "print_freq": 8,
+            "lr": 0.01,
+            "opt": "SGD",
+            "weight_decay": 0.0005,
+            "num_epochs": 30,
+            "save_checkpoints_at": [
+                15,
+                30
+            ]
+        },
+        "GA": {
+            "print_freq": 1,
+            "lr": 0.002,
+            "opt": "SGD",
+            "weight_decay": 0.0005,
+            "num_epochs": 5,
+            "save_checkpoints_at": [
+                1,
+                2
+            ]
+        },
+        "NegGrad_plus": {
+            "print_freq": 8,
+            "lr": 0.01,
+            "opt": "SGD",
+            "weight_decay": 0.0005,
+            "num_epochs": 2,
+            "save_checkpoints_at": [
+                1,
+                2
+            ],
+            "alpha": 0.7
+        },
+        "RL": {
+            "print_freq": 8,
+            "lr": 0.01,
+            "opt": "SGD",
+            "weight_decay": 0.0005,
+            "num_epochs": 10,
+            "save_checkpoints_at": [
+                1,
+                2
+            ]
+        },
+        "fisher": {
+            "lr": 0.01,
+            "num_epochs": 1,
+            "save_checkpoints_at": [
+                1
+            ],
+            "lambda": 5e-07
+        },
+        "SalUn": {},
+        "boundary_shrink": {
+            "print_freq": 1,
+            "lr": 5e-05,
+            "num_epochs": 10,
+            "save_checkpoints_at": [
+                2,
+                3
+            ],
+            "bound": 0.1,
+            "opt": "SGD"
+        },
+        "boundary_expanding": {
+            "lr": 1e-05,
+            "num_epochs": 10,
+            "save_checkpoints_at": [
+                5,
+                10
+            ],
+            "opt": "SGD"
+        },
+        "bad_teacher": {
+            "print_freq": 3,
+            "lr": 0.001,
+            "num_epochs": 2,
+            "save_checkpoints_at": [
+                1,
+                2
+            ],
+            "opt": "Adam"
+        },
+        "scrub": {
+            "print_freq": 3,
+            "opt": "Adam",
+            "weight_decay": 0.0005,
+            "lr": 0.001,
+            "num_epochs": 2,
+            "maxsteps": 1,
+            "save_checkpoints_at": [
+                1,
+                2
+            ],
+            "forget_batch_size": 1024,
+            "retain_batch_size": 128,
+            "T": 2,
+            "lr_decay_epochs": [
+                5,
+                8,
+                9
+            ],
+            "lr_decay_rate": 0.1
+        },
+        "UNSIR": {
+            "print_freq": 8,
+            "noise_batch_size": 256,
+            "num_noise_batches": 20,
+            "noise_train_epochs": 5,
+            "opt": "Adam",
+            "lr": 0,
+            "lr_impair": 0.001,
+            "lr_repair": 0.001,
+            "impair_epochs": 1,
+            "num_epochs": 2,
+            "save_checkpoints_at": [
+                1,
+                2
+            ]
+        }
+    },
+    "GRAND_SEED": 5002
+}
