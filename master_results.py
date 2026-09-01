@@ -22,7 +22,7 @@ from matplotlib.lines import Line2D
 # CONFIG
 # ============================================================
 
-SEED = 4
+SEED = 5
 
 RESULTS_FOLDER = f"results/seed_{SEED}"
 PLOTS_FOLDER = f"{RESULTS_FOLDER}/plots"
