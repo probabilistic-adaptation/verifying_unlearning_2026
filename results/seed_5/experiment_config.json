@@ -1,11 +1,11 @@
 {
-    "description": "Official seed 5",
+    "description": "Running remaining seed 5 with new hyperparams",
     "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "random",
     "num_runs": 3,
-    "measure_base_results": true,
-    "measure_retrain_results": true,
+    "measure_base_results": false,
+    "measure_retrain_results": false,
     "data": {
         "dataset": "CIFAR10",
         "num_classes": 10,
@@ -27,14 +27,13 @@
     },
     "unlearning": {
         "methods": [
-            "FT",
             "GA",
             "NegGrad_plus",
             "RL",
+            "scrub",
             "boundary_shrink",
             "bad_teacher",
-            "scrub",
-            "UNSIR"
+            "scrub"
         ],
         "measure_relearn_time": true,
         "FT": {
@@ -50,13 +49,13 @@
         },
         "GA": {
             "print_freq": 1,
-            "lr": 0.0002,
+            "lr": 0.002,
             "opt": "SGD",
             "weight_decay": 0.0005,
             "num_epochs": 5,
             "save_checkpoints_at": [
-                3,
-                5
+                1,
+                2
             ]
         },
         "NegGrad_plus": {
@@ -64,12 +63,12 @@
             "lr": 0.01,
             "opt": "SGD",
             "weight_decay": 0.0005,
-            "num_epochs": 10,
+            "num_epochs": 2,
             "save_checkpoints_at": [
-                5,
-                10
+                1,
+                2
             ],
-            "alpha": 0.999
+            "alpha": 0.7
         },
         "RL": {
             "print_freq": 8,
@@ -78,8 +77,8 @@
             "weight_decay": 0.0005,
             "num_epochs": 10,
             "save_checkpoints_at": [
-                5,
-                10
+                1,
+                2
             ]
         },
         "fisher": {
@@ -93,11 +92,11 @@
         "SalUn": {},
         "boundary_shrink": {
             "print_freq": 1,
-            "lr": 1e-05,
+            "lr": 5e-05,
             "num_epochs": 10,
             "save_checkpoints_at": [
-                5,
-                10
+                2,
+                3
             ],
             "bound": 0.1,
             "opt": "SGD"
@@ -113,7 +112,7 @@
         },
         "bad_teacher": {
             "print_freq": 3,
-            "lr": 0.0001,
+            "lr": 0.001,
             "num_epochs": 2,
             "save_checkpoints_at": [
                 1,
@@ -125,14 +124,14 @@
             "print_freq": 3,
             "opt": "Adam",
             "weight_decay": 0.0005,
-            "lr": 0.0005,
-            "num_epochs": 10,
+            "lr": 0.001,
+            "num_epochs": 2,
             "maxsteps": 1,
             "save_checkpoints_at": [
-                5,
-                10
+                1,
+                2
             ],
-            "forget_batch_size": 512,
+            "forget_batch_size": 1024,
             "retain_batch_size": 128,
             "T": 2,
             "lr_decay_epochs": [

@@ -60,6 +60,9 @@ def absolute_distance(p, q):
 
 
 def kl_divergence(p, q):
+    """
+    The KL divergence between two discrete distributions (p || q)
+    """
     p_log = torch.log(p + 1e-20)  
     q_log = torch.log(q + 1e-20) 
     kl_div = torch.sum(p * (p_log - q_log), dim=1)

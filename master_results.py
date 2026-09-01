@@ -423,6 +423,12 @@ SCATTERPLOT_PAIRS = [
          title="ToW vs. KL-divergence in retain and forget outputs (averaged)", color_by="method",
          xlabel = "ToW", ylabel = "KL-divergence"),
 
+    dict(x_metric="forget_acc",
+         y_metric="outputs.retrain_vs_unlearned.forget_test_avg.KL_divergence",
+        #  title="ToW vs. KL-divergence in retain and forget outputs (averaged)", 
+         color_by="method",
+         xlabel = "Forget accuracy", ylabel = "KL-divergence"),
+
 
     dict(x_metric="forgotten_class_fraction",
          y_metric="outputs.retrain_vs_unlearned.forget.prediction_distribution_diff",
