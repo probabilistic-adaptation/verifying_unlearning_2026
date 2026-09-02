@@ -48,7 +48,7 @@ from master_results import (
 #   zoom_x = (xmin, xmax)   x-limits for the right-hand (zoomed) panel
 #   zoom_y = (ymin, ymax)   y-limits for the right-hand (zoomed) panel
 #
-# Everything else (title, xlabel, ylabel, color_by, marker_by, line,
+# Everything else (xlabel, ylabel, color_by, marker_by, line,
 # log_scale, grouped handling) behaves just like in master_results.py.
 #
 # The zoom windows below are first guesses -- tweak them per plot so the
@@ -62,13 +62,13 @@ SCATTERPLOT_PAIRS = [
 
     dict(x_metric="forget_acc",
          y_metric="retain_acc",
-         title="Forget accuracy vs. Retain accuracy", color_by="method", line=0,
+         color_by="method", line=0,
          xlabel="Forget Accuracy", ylabel="Retain Accuracy",
          zoom_x=(98.5, 100), zoom_y=(98.5, 100)),
 
     dict(x_metric="forget_acc",
          y_metric="test_acc",
-         title="Forget accuracy vs. Test accuracy", color_by="method", line=0,
+         color_by="method", line=0,
          xlabel="Forget accuracy", ylabel="Test accuracy",
          zoom_x=(97, 100), zoom_y=(91, 94)),
 
@@ -84,6 +84,12 @@ SCATTERPLOT_PAIRS = [
          xlabel="Forget accuracy", ylabel="Forget m-entropy`",
          zoom_x=(98.5, 100), zoom_y=(0, 0.1)),
 
+    dict(x_metric="forget_entropy",
+         y_metric="forget_m_entropy",
+         color_by="method", line=0,
+         xlabel="Forget entropy", ylabel="Forget m-entropy`",
+         zoom_x=(0, 0.06), zoom_y=(0, 0.06)),
+
 
     # ----------------
     # -- MIA (threshold)
@@ -91,9 +97,9 @@ SCATTERPLOT_PAIRS = [
 
     dict(x_metric="threshold_MIA.efficacy",
          y_metric="threshold_MIA.attack_accuracy",
-         title="Threshold MIA: attack efficacy vs. accuracy", color_by="method", line=0,
+         color_by="method", line=0,
          xlabel="Efficacy", ylabel="Accuracy",
-         zoom_x=(-0.1, 0.3), zoom_y=(0.4, 0.7)),
+         zoom_x=(0.02, 0.12), zoom_y=(0.525, 0.55)),
 
     dict(x_metric="forget_acc",
          y_metric="threshold_MIA.efficacy",
@@ -107,7 +113,7 @@ SCATTERPLOT_PAIRS = [
 
     dict(x_metric="ToW",
          y_metric="ToW_MIA",
-         title="ToW vs. ToW_MIA", color_by="method", line=0,
+         color_by="method", line=0,
          xlabel="ToW", ylabel="ToW_MIA",
          zoom_x=(0.8, 1.0), zoom_y=(0.8, 1.0)),
 
@@ -117,7 +123,6 @@ SCATTERPLOT_PAIRS = [
 
     dict(x_metric="forget_m_entropy",
          y_metric="outputs.retrain_vs_unlearned.forget.absolute_distance",
-         title="Forget m-entropy vs. Absolute distance on forget set outputs, retrain vs. unlearned",
          color_by="method",
          xlabel="Forget m-entropy", ylabel="Absolute distance",
          zoom_x=(0.0, 2.0), zoom_y=(0.0, 0.2)),
@@ -126,11 +131,30 @@ SCATTERPLOT_PAIRS = [
     # ---------------------- Relearn Time ---
     # ----------------------------------------
 
-    dict(x_metric="forget_acc",
+    dict(x_metric="forget_m_entropy",
          y_metric="relearn_time.avg_epochs",
-         title="Forget accuracy vs. Relearn time", color_by="method", line=0,
-         xlabel="Forget accuracy", ylabel="Relearn time",
-         zoom_x=(0.0, 0.2), zoom_y=(0.0, 10.0)),
+         color_by="method", line=0,
+         xlabel="Forget m_entropy", ylabel="Relearn time",
+         zoom_x=(0, .1), zoom_y=(0.0, 5.0)),
+
+    dict(x_metric="weight_differences.original_vs_unlearned.l2_distance",
+         y_metric="relearn_time.avg_epochs",
+         color_by="method",
+         xlabel = "Weight L2-distance (original-vs-unlearned)", ylabel = "Relearn time",
+         zoom_x=(0, 3), zoom_y=(0.0, 3)),
+
+
+    dict(x_metric="forget_m_entropy",
+         y_metric="weight_differences.original_vs_unlearned.l2_distance",
+         color_by="method", line=0,
+         xlabel="Forget m_entropy", ylabel="L2 weight distance, original vs. unlearned",
+         zoom_x=(0, .1), zoom_y=(0.0, 5.0)),
+
+
+
+
+
+
 ]
 
 
@@ -226,7 +250,7 @@ def dual_results_scatterplot(final_df, x_metric, y_metric, zoom_x, zoom_y,
                              color_by="method", marker_by="method",
                              base_color="black", retain_color="purple",
                              base_marker="o", retain_marker="X",
-                             title=None, xlabel=None, ylabel=None,
+                             xlabel=None, ylabel=None,
                              grouped=True, line=0, log_scale=False,
                              save_path=None):
     """
@@ -294,11 +318,9 @@ def dual_results_scatterplot(final_df, x_metric, y_metric, zoom_x, zoom_y,
         ax.set_ylabel("")
     ax_full.set_ylabel(ylabel if ylabel is not None else default_ylabel)
     fig.supxlabel(xlabel if xlabel is not None else default_xlabel)
-    ax_full.set_title("full")
-    ax_zoom.set_title(f"zoom  x{tuple(round(v, 3) for v in (zx0, zx1))}  y{tuple(round(v, 3) for v in (zy0, zy1))}",
-                      fontsize=11)
-    if title:
-        fig.suptitle(title, fontsize=15)
+    # ax_full.set_title("full")
+    # ax_zoom.set_title(f"zoom  x{tuple(round(v, 3) for v in (zx0, zx1))}  y{tuple(round(v, 3) for v in (zy0, zy1))}",
+    #                   fontsize=11)
 
     fig.tight_layout()
     if save_path is None:
