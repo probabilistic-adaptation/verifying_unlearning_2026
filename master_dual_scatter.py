@@ -90,6 +90,18 @@ SCATTERPLOT_PAIRS = [
          xlabel="Forget entropy", ylabel="Forget m-entropy`",
          zoom_x=(0, 0.06), zoom_y=(0, 0.06)),
 
+    dict(x_metric="forget_entropy",
+         y_metric="test_entropy",
+         color_by="method", line=0,
+         xlabel="Forget entropy", ylabel="Test entropy",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="forget_entropy",
+         y_metric="retain_entropy",
+         color_by="method", line=0,
+         xlabel="Forget entropy", ylabel="Retain entropy",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
 
     # ----------------
     # -- MIA (threshold)
@@ -137,6 +149,12 @@ SCATTERPLOT_PAIRS = [
          xlabel="Forget m_entropy", ylabel="Relearn time",
          zoom_x=(0, .1), zoom_y=(0.0, 5.0)),
 
+    dict(x_metric="forget_acc",
+         y_metric="relearn_time.avg_epochs",
+         color_by="method", line=0,
+         xlabel="Forget acc", ylabel="Relearn time",
+         zoom_x=(97, 100), zoom_y=(0, 3)),
+
     dict(x_metric="weight_differences.original_vs_unlearned.l2_distance",
          y_metric="relearn_time.avg_epochs",
          color_by="method",
@@ -151,9 +169,100 @@ SCATTERPLOT_PAIRS = [
          zoom_x=(0, .1), zoom_y=(0.0, 5.0)),
 
 
+    # ----------------------------------------
+    # ---------------------- Logistic MIA ---
+    # ----------------------------------------
 
 
+        dict(x_metric="logistic_regression_MIA.efficacy",
+         y_metric="logistic_regression_MIA.attack_accuracy",
+        #  title="Logistic Regression MIA: attack efficacy vs. accuracy", 
+         color_by="method", line=0,
+         xlabel = "Efficacy", ylabel = "Accuracy",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
 
+    dict(x_metric="logistic_regression_MIA.efficacy",
+         y_metric="logistic_regression_MIA.auc",
+         color_by="method", line=0,
+         xlabel = "Efficacy", ylabel = "AUC",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="logistic_regression_MIA.efficacy",
+         y_metric="logistic_regression_MIA.f1",
+         color_by="method", line=0,
+         xlabel = "Efficacy", ylabel = "F1-score",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="logistic_regression_MIA.efficacy",
+         y_metric="logistic_regression_MIA.avg_member_probability_forget",
+         color_by="method", line=0,
+         xlabel = "Efficacy", ylabel = "Average member probability (forget set)",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="logistic_regression_MIA.attack_accuracy",
+         y_metric="logistic_regression_MIA.auc",
+         color_by="method", line=0,
+         xlabel = "Accuracy", ylabel = "AUC",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="logistic_regression_MIA.attack_accuracy",
+         y_metric="logistic_regression_MIA.f1",
+         color_by="method", line=0,
+         xlabel = "Accuracy", ylabel = "F1-score",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="logistic_regression_MIA.attack_accuracy",
+         y_metric="logistic_regression_MIA.avg_member_probability_forget",
+         color_by="method", line=0,
+         xlabel = "Accuracy", ylabel = "Average member probability (forget set)",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="logistic_regression_MIA.auc",
+         y_metric="logistic_regression_MIA.f1",
+         color_by="method", line=0,
+         xlabel = "AUC", ylabel = "F1-score",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="logistic_regression_MIA.auc",
+         y_metric="logistic_regression_MIA.avg_member_probability_forget",
+         color_by="method", line=0,
+         xlabel = "AUC", ylabel = "Average member probability (forget set)",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="logistic_regression_MIA.f1",
+         y_metric="logistic_regression_MIA.avg_member_probability_forget",
+         color_by="method", line=0,
+         xlabel = "F1-score", ylabel = "Average member probability (forget set)",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+    dict(x_metric="logistic_regression_MIA.efficacy", 
+         y_metric="logistic_regression_MIA.forgetting_rate",
+         color_by="method", line=0,
+         xlabel = "Efficacy", ylabel = "Forgetting rate",
+         zoom_x=(0, 0.1), zoom_y=(0, 0.1)),
+
+
+    # --------------------------------
+    # ----prediction_distribution_diff
+    # --------------------------------
+
+    dict(x_metric="forget_acc",
+         y_metric="outputs.retrain_vs_unlearned.forget.prediction_distribution_diff",
+         color_by="method",
+         xlabel = "Forget accuracy", ylabel = "Prediction distribution difference",
+         zoom_x=(98, 100), zoom_y=(0, 0.05)),
+
+
+    # --------------------------------
+    # ---- wasserstein
+    # --------------------------------
+
+
+    dict(x_metric="forget_acc",
+         y_metric="outputs.unlearned.forget_vs_test.wasserstein_distance",
+         color_by="method",
+         xlabel = "Forget accuracy", ylabel = "Wasserstein distance",
+         zoom_x=(98, 100), zoom_y=(.3, 0.4)),
 
 ]
 

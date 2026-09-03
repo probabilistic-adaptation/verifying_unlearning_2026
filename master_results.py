@@ -254,6 +254,11 @@ SCATTERPLOT_PAIRS = [
          title="Run-time efficiency vs. Forget m-entropy", color_by="method", line=0,
          xlabel = "Run-time efficiency", ylabel = "Forget m-entropy"),
 
+    dict(x_metric="total_unlearning_time_up_to_now", 
+         y_metric="forget_acc",
+         title="Run-time efficiency vs. Forget accuracy", color_by="method", line=0,
+         xlabel = "Run-time efficiency", ylabel = "Forget accuracy"),
+
 
     # ----------------
     # -- Holistic
@@ -371,6 +376,11 @@ SCATTERPLOT_PAIRS = [
          title="Forget m-entropy vs. Absolute distance on forget set outputs, retrain vs. unlearned", color_by="method",
          xlabel = "Forget m-entropy", ylabel = "Absolute distance"),
 
+    dict(x_metric="forget_acc",
+         y_metric="outputs.retrain_vs_unlearned.forget.absolute_distance",
+         title="Forget accuracy vs. Absolute distance on forget set outputs, retrain vs. unlearned", color_by="method",
+         xlabel = "Forget accuracy", ylabel = "Absolute distance"),
+
 
     # ----------------
     # -- ZRF-score
@@ -412,7 +422,17 @@ SCATTERPLOT_PAIRS = [
          color_by="method",
          xlabel = "Threshold_MIA.efficacy", ylabel = "ZRF-score"),
 
+    dict(x_metric="logistic_regression_MIA.efficacy",
+         y_metric="outputs.bad_teacher_vs_unlearned.forget.ZRF_score",
+        #  title="JS divergence (unlearned vs. retrained) vs. ZRF-score", 
+         color_by="method",
+         xlabel = "Logistic Classifier MIA efficacy", ylabel = "ZRF-score"),
 
+
+
+    # ----------------
+    # -- KL divergence
+    # ----------------
 
 
 
@@ -428,6 +448,17 @@ SCATTERPLOT_PAIRS = [
         #  title="ToW vs. KL-divergence in retain and forget outputs (averaged)", 
          color_by="method",
          xlabel = "Forget accuracy", ylabel = "KL-divergence"),
+
+    dict(x_metric="forget_entropy",
+         y_metric="outputs.retrain_vs_unlearned.forget_test_avg.KL_divergence",
+        #  title="ToW vs. KL-divergence in retain and forget outputs (averaged)", 
+         color_by="method",
+         xlabel = "Forget entropy", ylabel = "KL-divergence"),
+
+
+    # ----------------
+    # -- prediction distribution differences
+    # ----------------
 
 
     dict(x_metric="forgotten_class_fraction",
@@ -450,6 +481,11 @@ SCATTERPLOT_PAIRS = [
          y_metric="outputs.retrain_vs_unlearned.forget.normalized_confusion_distance",
          title="Forget m-entropy vs. Normalized confusion distance (unlearned vs. retrained)", color_by="method",
          xlabel = "Forget m-entropy", ylabel = "Normalized confusion distance"),
+
+    dict(x_metric="forget_acc",
+         y_metric="outputs.retrain_vs_unlearned.forget.normalized_confusion_distance",
+         title="Forget accuracy vs. Normalized confusion distance (unlearned vs. retrained)", color_by="method",
+         xlabel = "Forget accuracy", ylabel = "Normalized confusion distance"),
 
 
 
