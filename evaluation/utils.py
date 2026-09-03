@@ -181,6 +181,19 @@ def measure_solo_metrics(model, dataloaders, device, seed, compute_fisher = Fals
     if track_forgotten_class:
         results["forgotten_class_fraction"] = main_out["test"]["forgotten_class_fraction"]
 
+
+    results = deep_update(results, { 
+        "outputs": {
+            "unlearned": {
+                "forget_vs_test": {
+                    "wasserstein_distance": wasserstein_distance(main_out['forget']["losses"], main_out['test']["losses"]),
+                    "ks_statistics": ks_2samp(main_out['forget']["losses"], main_out['test']["losses"], method = 'asymp')[0] # only need first item, second item is the p-value
+                    }
+                    }
+                    }
+                    }
+    )
+
     return results, main_out
 
 
@@ -285,14 +298,15 @@ def measure_solo_and_comparison_metrics(model, dataloaders, device, seed, model_
                 "forget": {
                     "ZRF_score": 1 - JSDiv( main_out['forget']['probs'], bad_teacher_forget_out['probs']),
                     },
-                },
-            f"unlearned": {
-                "forget_vs_test": {
-                    "wasserstein_distance": wasserstein_distance(main_out['forget']["losses"], main_out['test']["losses"]),
-                    "ks_statistics": ks_2samp(main_out['forget']["losses"], main_out['test']["losses"], method = 'asymp')[0] # only need first item, second item is the p-value
-                    }
-                    }
-                },
+                }
+            },
+            # f"unlearned": {
+            #     "forget_vs_test": {
+            #         "wasserstein_distance": wasserstein_distance(main_out['forget']["losses"], main_out['test']["losses"]),
+            #         "ks_statistics": ks_2samp(main_out['forget']["losses"], main_out['test']["losses"], method = 'asymp')[0] # only need first item, second item is the p-value
+            #         }
+            #         }
+            #     },
 
         "weight_differences": {
             "retrain_vs_unlearned": {

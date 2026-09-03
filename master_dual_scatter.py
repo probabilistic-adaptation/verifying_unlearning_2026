@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 from master_results import (
-    SEED,
+    # SEED,
     RESULTS_FOLDER,
     PLOTS_FOLDER,
     EPOCHS, CLASSES, PERCENTS, RUNS, METHODS, BASE, RETRAIN,
@@ -37,6 +37,7 @@ from master_results import (
     _method_marker,
 )
 
+SEED = 5
 
 # ============================================================
 # CONFIG

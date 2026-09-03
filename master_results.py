@@ -267,7 +267,7 @@ SCATTERPLOT_PAIRS = [
     dict(x_metric="ToW",
          y_metric="ToW_MIA",
          title="ToW vs. ToW_MIA", color_by="method", line=0,
-         xlabel = "ToW", ylabel = "ToW_MIA"),
+         xlabel = "ToW", ylabel = "ToW-MIA"),
 
 
     dict(x_metric="ToW",
@@ -275,6 +275,13 @@ SCATTERPLOT_PAIRS = [
         #  title="ToW vs. ToW_MIA", 
          color_by="method", line=0,
          xlabel = "ToW", ylabel = "threshold MIA efficacy"),
+
+
+    dict(x_metric="ToW",
+         y_metric="ToW_MIA_logistic",
+        #  title="ToW vs. ToW_MIA", 
+         color_by="method", line=0,
+         xlabel = "ToW", ylabel = "ToW-MIA (logistic)"),
 
 
     # ----------------------------------------
@@ -557,7 +564,7 @@ def flatten_result(d):
 
     for key in ['type', 'epoch', 'run', 'forget_set_type', 'unlearning_item',
                 'method', 'epoch_duration', 'total_unlearning_time_up_to_now', 'ToW',
-                'ToW_MIA', 'forgotten_class_fraction']:
+                'ToW_MIA', 'forgotten_class_fraction', 'ToW_MIA_logistic']:
         if key in d:
             flat[key] = d[key]
 

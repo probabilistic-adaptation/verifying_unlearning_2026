@@ -149,5 +149,13 @@
         "FP": 2559.04,
         "FN": 2481.72
     },
+    "outputs": {
+        "unlearned": {
+            "forget_vs_test": {
+                "wasserstein_distance": 0.05212346246966418,
+                "ks_statistics": 0.2289
+            }
+        }
+    },
     "type": "retrain"
 }

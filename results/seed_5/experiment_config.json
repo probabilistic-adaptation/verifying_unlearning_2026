@@ -1,11 +1,11 @@
 {
-    "description": "Running remaining seed 5 with new hyperparams",
+    "description": "adding wasserstein distance, and KS statistics to seed 5",
     "device": "cuda",
     "model_class": "ResNet",
     "unlearning_type": "random",
-    "num_runs": 3,
-    "measure_base_results": false,
-    "measure_retrain_results": false,
+    "num_runs": 1,
+    "measure_base_results": true,
+    "measure_retrain_results": true,
     "data": {
         "dataset": "CIFAR10",
         "num_classes": 10,
@@ -26,16 +26,8 @@
         }
     },
     "unlearning": {
-        "methods": [
-            "GA",
-            "NegGrad_plus",
-            "RL",
-            "scrub",
-            "boundary_shrink",
-            "bad_teacher",
-            "scrub"
-        ],
-        "measure_relearn_time": true,
+        "methods": [],
+        "measure_relearn_time": false,
         "FT": {
             "print_freq": 8,
             "lr": 0.01,
