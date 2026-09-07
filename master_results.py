@@ -50,6 +50,16 @@ NON_METRIC_COLUMNS = {
     "class", "percent",
 }
 
+# per-metric y-axis limits for run_barplots() -- metrics not listed here get
+# their ylim computed automatically by matplotlib. Values are (ymin, ymax)
+# tuples passed straight to ax.set_ylim().
+BARPLOT_YLIMS = {
+    # "weight_differences.retrain_vs_unlearned.l2_distance": (70, 85),
+    # "ToW": (.5, 1),
+    # "ToW_MIA": (.5, 1),
+    # "ToW_MIA_logistic": (.5, 1),
+}
+
 # (x_metric, y_metric) pairs to scatterplot, each with its own plotting
 # kwargs (anything results_scatterplot() accepts) -- add/remove pairs here to
 # control what gets generated
@@ -242,7 +252,21 @@ SCATTERPLOT_PAIRS = [
          xlabel = "Efficacy", ylabel = "Forgetting rate"),
 
 
+    # ----------------
+    # -- comparing threshold vs logistic 
+    # ----------------
 
+    dict(x_metric="threshold_MIA.efficacy", 
+         y_metric="logistic_regression_MIA.efficacy",
+        #  title="Threshold MIA: attack efficacy vs. accuracy", 
+         color_by="method", line=0,
+         xlabel = "Threshold MIA efficacy", ylabel = "Logistic MIA efficacy"),
+
+    dict(x_metric="threshold_MIA.attack_accuracy", 
+         y_metric="logistic_regression_MIA.attack_accuracy",
+        #  title="Threshold MIA: attack efficacy vs. accuracy", 
+         color_by="method", line=0,
+         xlabel = "Threshold MIA accuracy", ylabel = "Logistic MIA accuracy"),
 
 
     # ----------------
@@ -456,11 +480,11 @@ SCATTERPLOT_PAIRS = [
          color_by="method",
          xlabel = "Forget accuracy", ylabel = "KL-divergence"),
 
-    dict(x_metric="forget_entropy",
+    dict(x_metric="forget_m_entropy",
          y_metric="outputs.retrain_vs_unlearned.forget_test_avg.KL_divergence",
         #  title="ToW vs. KL-divergence in retain and forget outputs (averaged)", 
          color_by="method",
-         xlabel = "Forget entropy", ylabel = "KL-divergence"),
+         xlabel = "Forget m-entropy", ylabel = "KL-divergence"),
 
 
     # ----------------
@@ -508,6 +532,11 @@ SCATTERPLOT_PAIRS = [
          y_metric="outputs.unlearned.forget_vs_test.ks_statistics",
          title="Forget accuracy vs. KS statistic on cross-entropy losses, forget vs. test", color_by="method", line=0,
          xlabel = "Forget accuracy", ylabel = "KS statistic"),
+
+    dict(x_metric="forget_m_entropy",
+         y_metric="outputs.unlearned.forget_vs_test.ks_statistics",
+         title="Forget m-entropy vs. KS statistic on cross-entropy losses, forget vs. test", color_by="method", line=0,
+         xlabel = "Forget m-entropy", ylabel = "KS statistic"),
 
 
     # ----------------------------------------
@@ -839,6 +868,7 @@ def results_barplot(final_df, metric,
                     title=None, ylabel=None,
                     base_color="black", retain_color="purple",
                     log_scale=False,
+                    ylim=None,
                     save_path=None):
     """
     Bar chart of a single metric, one bar per (method, epoch) group, with the
@@ -846,6 +876,7 @@ def results_barplot(final_df, metric,
 
     log_scale: if True, natural-log-transform `metric` before plotting
     (non-positive values are dropped, not just relabeled on a log axis).
+    ylim: optional (ymin, ymax) tuple; if omitted, matplotlib picks it automatically.
     save_path: if given, the figure is saved there instead of shown.
     """
     if log_scale:
@@ -899,6 +930,8 @@ def results_barplot(final_df, metric,
     ax.set_xticks(x)
     ax.set_xticklabels(agg["label"], rotation=30 if len(agg) > 6 else 0, ha="right" if len(agg) > 6 else "center")
     ax.grid(axis="y", alpha=0.3)
+    if ylim is not None:
+        ax.set_ylim(ylim)
     plt.tight_layout()
     _save_or_show(fig, save_path)
 
@@ -939,6 +972,7 @@ def run_barplots(results, plots_folder):
                 results,
                 metric,
                 log_scale=metric.startswith("residual_information."),
+                ylim=BARPLOT_YLIMS.get(metric),
                 save_path=save_path,
             )
         except Exception as e:
